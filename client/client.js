@@ -96,6 +96,72 @@
         }
     } //}}}
     // Model {{{1
+    (function() {
+        var content = {
+            lastSync: 1356706097976,
+            calendar: [{
+                date: 1356706097976,
+                title: "Glædeligt nytår",
+                description: "starten af en artikel ....",
+                url: "http://bibilitek.kk.dk/foo/bar...html",
+                thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"}],
+            news: [{
+                date: 1356706097976,
+                title: "Nytårskursus",
+                description: "Kursus om ...",
+                url: "http://bibilitek.kk.dk/foo/bar...html",
+                thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"}]};
+        var cache = {
+            materials: {
+                "830318:48781321": {
+                    lastSync: 1356706097976,
+                    id: "830318:48781321",
+                    title: "Samlede Eventyr",
+                    creator: "H. C. Andersen",
+                    type: "book",
+                    thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
+                    description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
+                    topic: ["dk5:89.13", "eventyr"],
+                    isbn: "891384328401",
+                    status: "available",
+                }},
+            searches: {
+                "sample search string": {
+                    id: "sample search string",
+                    lastSync: 1356706097976,
+                    resultCount: 1324,
+                    resultsLoaded: 20,
+                    results: [{
+                        id: "830318:48781321",
+                        title: "Samlede Eventyr",
+                        creator: "H. C. Andersen",
+                        type: "book",
+                        thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
+                        description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
+                        status: "available"}]} }};
+        var patronInfo = {
+            lastSync: Date.now(),
+            name: "Joe User",
+            loans: {
+                "830318:48781321": {
+                    expireDate: 1356706097976,
+                    id: "830318:48781321",
+                    title: "Some title",
+                    author: "Some author",
+                    // set renewRequest if we have requested a renew
+                    renewRequest: true }},
+            reservations: {
+                "830318:48781321": {
+                    expireDate: 1356706097976,
+                    reservationDate: 1356706097976,
+                    id: "830318:48781321",
+                    title: "Some title",
+                    author: "Some author",
+                    // set deleteRequest if we want to delete the reservation
+                    deleteRequest: true,
+                    // info about arrival if arrived
+                    arrived: "7/1 32 Husum"} }};
+    })();
     // Views {{{1
     function genStyles() { //{{{
         var width = 240;
