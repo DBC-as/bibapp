@@ -1,43 +1,8 @@
 // Copyright 2012 Rasmus Erik
+/*global document:true*/
 (function() {
     "use strict";
     // Util {{{1
-    function jmlToStr(jml) { //{{{
-        if(Array.isArray(jml)) {
-            var children;
-            var classes = jml[0].split(".");
-            var name = classes[0];
-            classes = classes.slice(1);
-            var attr = jml[1];
-            var pos = 1;
-            if(typeof attr === "object" && attr.constructor === Object) {
-                children = jml.slice(2);
-                attr = attr;
-            } else {
-                children = jml.slice(1);
-                attr = {};
-            }
-            if(classes.length) {
-                attr["class"] = classes.join(" ");
-            }
-            var result = "<" + name + 
-                Object.keys(attr).map(function(key) {
-                    return " " + key + "=\"" + attr[key] + "\"";
-                }).join("");
-
-            if(children.length === 0) {
-                result += "/>";
-            } else {
-                result += ">";
-                result += children.map(jmlToStr).join("");
-                result += "</" + name + ">";
-            }
-
-            return result;
-        } else {
-            return String(jml);
-        }
-    } //}}}
     function jmlToDom(jml) { //{{{
         if(Array.isArray(jml)) {
             var children;
