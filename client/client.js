@@ -33,28 +33,55 @@
             return document.createTextNode(jml);
         }
     } //}}}
-    function applyStyle(domNode, style) {//{{{
-        var styleObj = domNode.style;
-        for(var prop in style) {
-            var val = style[prop];
-            if(typeof val === "number") {
-                val = val + "px";
+    // DomProcess {{{
+    function DomProcess() { //{{{
+        this.apply = function(dom) {
+            return this;
+        };
+    } //}}}
+    DomProcess.prototype.bind = function(f) { //{{{
+        var apply = this.apply;
+        this.apply = function(dom) {
+            apply(dom);
+            f(dom);
+            return this;
+        };
+        return this;
+    }; //}}}
+    DomProcess.prototype.css = function(style) { //{{{
+        this.bind(function(dom) {
+            var styleObj = dom.style;
+            for(var prop in style) {
+                var val = style[prop];
+                if(typeof val === "number") {
+                    val = val + "px";
+                }
+                styleObj[prop] = val;
             }
-            styleObj[prop] = val;
-        }
-    }//}}}
+        });
+        return this;
+    }; //}}}
+    DomProcess.prototype.on = function(event, fn) { //{{{
+        this.bind(function(dom) {
+            var evs = event.split(" ");
+            for(var i = 0; i < evs.length; ++i) {
+                dom["on" + evs[i]] = fn;
+            }
+        });
+        return this;
+    }; //}}}
+    function css(obj) { //{{{
+        return (new DomProcess()).css(obj);
+    } //}}}
+    //}}}
     function domRecursiveApply(domNode, table) { //{{{
         var classes = domNode.classList;
         for(var i = 0; i < classes.length; ++i) {
             var entry = table[classes[i]];
-
-            if(typeof entry === "object") {
-                applyStyle(domNode, entry);
-            } else if(typeof entry === "function") {
-                entry(domNode);
+            if(entry) {
+                entry.apply(domNode);
             }
         }
-
         var children = domNode.children;
         for(i=0; i<children.length; ++i) {
             domRecursiveApply(children[i], table);
@@ -88,7 +115,7 @@
                     description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
                     topic: ["dk5:89.13", "eventyr"],
                     isbn: "891384328401",
-                    status: "available",
+                    status: "available"
                 }},
             searches: {
                 "sample search string": {
@@ -128,15 +155,16 @@
                     arrived: "7/1 32 Husum"} }};
     })();
     // Views {{{1
+    // Actual style {{{2
     function genStyles() { //{{{
         var width = 240;
         var height = 320;
         var margin = (width / 40) & ~1;
         var unit = ((width - 7 * margin)/6) | 0;
         var margin0 = (width - 7 * margin - unit * 6) >> 1;
-        var smallFont = unit * .4;
+        var smallFont = unit * 0.4;
         function wn(n) { //{{{
-            return {
+            return css({
                 verticalAlign: "middle",
                 border: "none",
                 padding: 0,
@@ -144,22 +172,22 @@
                 marginRight: 0,
                 width: unit * n + margin * (n-1),
                 display: "inline-block",
-                boxShadow: "1px 1px 4px rgba(0,0,0,1)",
-            };
+                boxShadow: "1px 1px 4px rgba(0,0,0,1)"
+            });
         } //}}}
         var result = { //{{{
-            line: {
+            line: css({
                 marginTop: margin,
                 //textAlign: "center",
-                height: unit,
-            },
-            content: {
+                height: unit
+            }),
+            content: css({
                 position: "relative",
                 top: unit+margin,
                 left: 0,
-                width: width,
-            },
-            page: {
+                width: width
+            }),
+            page: css({
                 //position: "relative",
                 verticalAlign: "middle",
                 //overflow: "hidden",
@@ -172,45 +200,48 @@
                 display: "inline-block",
                 width: width,
                 height: height,
-                background: "white",
-            },
-            header: {
+                background: "white"
+            }),
+            header: css({
                 position: "fixed",
                 height: unit+margin, width: width,
-                background: "rgba(255,255,255,.7)",
-            },
-            largeWidget: {
+                background: "rgba(255,255,255,.7)"
+            }),
+            largeWidget: css({
                 marginTop: margin,
                 height: (height - unit * 3 - margin * 6) >>1,
                 marginLeft: margin,
                 marginRight: margin,
                 overflow: "hidden",
-                boxShadow: "1px 1px 4px rgba(0,0,0,1)",
-            },
-            resultImg: {
+                boxShadow: "1px 1px 4px rgba(0,0,0,1)"
+            }),
+            resultImg: css({
                 float: "left",
                 height: 1.618 * unit,
                 width: unit,
                 marginRight: margin,
-                marginBottom: margin,
-            },
-            resultOrderButton: {
+                marginBottom: margin
+            }).on("click", function() {
+                // TODO: remove this example
+                alert("click");
+            }),
+            resultOrderButton: css({
                 float: "right",
-                height: unit,
-            },
-            searchResult: {
+                height: unit
+            }),
+            searchResult: css({
                 marginTop: margin,
                 height: 1.618 * unit,
-                overflow: "hidden",
-            },
-            headerPadding: { height: unit+margin },
+                overflow: "hidden"
+            }),
+            headerPadding: css({ height: unit+margin }),
             w1: wn(1), w2: wn(2), w3: wn(3),
-            w4: wn(4), w5: wn(5), w6: wn(6),
-        } //}}}
+            w4: wn(4), w5: wn(5), w6: wn(6)
+        }; //}}}
         return result;
     } //}}}
-    var jml = ["div",  //{{{
-            ["div.page.frontPage", //{{{
+    // Layout {{{2
+    var frontPage = ["div.page.frontPage", //{{{
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
                 ["div.patronWidget.w4.line", "Lånerstatus: Afl.&nbsp;12/1. Lån:&nbsp;7, Hjemkomne:&nbsp;3."],
                 ["div.openingTime.w2.line", "Åbningstider"],
@@ -229,8 +260,8 @@
                     ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
                     ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
                     ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]]], //}}}
-            ["div.page.patronInfo", //{{{
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]]]; //}}}
+    var patronPage = ["div.page.patronInfo", //{{{
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
                     ["span.patronStatus.w4.line", "Logget ind som Joe User", ["br"], "Opdateret i dag 15:31"],
@@ -261,8 +292,8 @@
                     ["div",
                         ["span.w1.line", "3/1"], 
                         ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
-                        ["div.w1.renewAll.line", "slet"]]]], //}}}
-            ["div.page.searchResults", //{{{
+                        ["div.w1.renewAll.line", "slet"]]]]; //}}}
+    var resultsPage = ["div.page.searchResults", //{{{
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
                     ["textarea.searchBox.w4.line", "searchquery"],
@@ -297,9 +328,9 @@
                         ["div.resultOrderButton.w1", "Bestil"],
                         ["div.resultTitle", "Der var engang..."],
                         ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]]],//}}}
-            ], //}}}
-            ["div.page.login", //{{{
+                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]]] //}}}
+            ]; //}}}
+    var loginPage = ["div.page.login", //{{{
                 ["span.w6.spacing.largeWidget", ""],
                 ["div.w2.right", "Login:"],
                 ["input.w4.line", ""],
@@ -308,13 +339,14 @@
                 ["span.w2.spacing", ""],
                 ["div.w2.line.button", "Annuller"],
                 ["div.w2.line.button", "Login"],
-                ["span.w6.spacing.largeWidget", ""],
-            ], //}}}
-    ]; //}}}
+                ["span.w6.spacing.largeWidget", ""]
+            ]; //}}}
+    //}}}
     // Control {{{1
     // Test {{{1
-    var dom = jmlToDom(jml);
-    document.body.appendChild(dom);
-    domRecursiveApply(dom, genStyles());
-    console.log(jmlToDom("foo bar baz").constructor);
+    document.body.appendChild(jmlToDom(frontPage));
+    document.body.appendChild(jmlToDom(patronPage));
+    document.body.appendChild(jmlToDom(resultsPage));
+    document.body.appendChild(jmlToDom(loginPage));
+    domRecursiveApply(document.body, genStyles());
 })();
