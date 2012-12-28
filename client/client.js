@@ -1,6 +1,102 @@
 // Copyright 2012 Rasmus Erik
 (function() {
     "use strict";
+    // Util {{{1
+    function jmlToStr(jml) { //{{{
+        if(Array.isArray(jml)) {
+            var children;
+            var classes = jml[0].split(".");
+            var name = classes[0];
+            classes = classes.slice(1);
+            var attr = jml[1];
+            var pos = 1;
+            if(typeof attr === "object" && attr.constructor === Object) {
+                children = jml.slice(2);
+                attr = attr;
+            } else {
+                children = jml.slice(1);
+                attr = {};
+            }
+            if(classes.length) {
+                attr["class"] = classes.join(" ");
+            }
+            var result = "<" + name + 
+                Object.keys(attr).map(function(key) {
+                    return " " + key + "=\"" + attr[key] + "\"";
+                }).join("");
+
+            if(children.length === 0) {
+                result += "/>";
+            } else {
+                result += ">";
+                result += children.map(jmlToStr).join("");
+                result += "</" + name + ">";
+            }
+
+            return result;
+        } else {
+            return String(jml);
+        }
+    } //}}}
+    function jmlToDom(jml) { //{{{
+        if(Array.isArray(jml)) {
+            var children;
+            var classes = jml[0].split(".");
+            var name = classes[0];
+            classes = classes.slice(1);
+            var attr = jml[1];
+            var pos = 1;
+            if(typeof attr === "object" && attr.constructor === Object) {
+                ++pos;
+                attr = attr;
+            } else {
+                attr = {};
+            }
+            if(classes.length) {
+                attr["class"] = classes.join(" ");
+            }
+            var elem = document.createElement(name);
+            for(var prop in attr) {
+                elem.setAttribute(prop, attr[prop]);
+            }
+            while(pos < jml.length) {
+                elem.appendChild(jmlToDom(jml[pos]));
+                ++pos;
+            }
+            return elem;
+        } else {
+            return document.createTextNode(jml);
+        }
+    } //}}}
+    function applyStyle(domNode, style) {//{{{
+        var styleObj = domNode.style;
+        for(var prop in style) {
+            var val = style[prop];
+            if(typeof val === "number") {
+                val = val + "px";
+            }
+            styleObj[prop] = val;
+        }
+    }//}}}
+    function domRecursiveApply(domNode, table) { //{{{
+        var classes = domNode.classList;
+        for(var i = 0; i < classes.length; ++i) {
+            var entry = table[classes[i]];
+
+            if(typeof entry === "object") {
+                applyStyle(domNode, entry);
+            } else if(typeof entry === "function") {
+                entry(domNode);
+            }
+        }
+
+        var children = domNode.children;
+        for(i=0; i<children.length; ++i) {
+            domRecursiveApply(children[i], table);
+        }
+    } //}}}
+    // Model {{{1
+    // Views {{{1
     function genStyles() { //{{{
         var width = 240;
         var height = 320;
@@ -82,65 +178,7 @@
         } //}}}
         return result;
     } //}}}
-    function jmlToStr(jml) { //{{{
-        if(Array.isArray(jml)) {
-            var children;
-            var classes = jml[0].split(".");
-            var name = classes[0];
-            classes = classes.slice(1);
-            var attr = jml[1];
-            var pos = 1;
-            if(typeof attr === "object" && attr.constructor === Object) {
-                children = jml.slice(2);
-                attr = attr;
-            } else {
-                children = jml.slice(1);
-                attr = {};
-            }
-            if(classes.length) {
-                attr["class"] = classes.join(" ");
-            }
-            var result = "<" + name + 
-                Object.keys(attr).map(function(key) {
-                    return " " + key + "=\"" + attr[key] + "\"";
-                }).join("");
-
-            if(children.length === 0) {
-                result += "/>";
-            } else {
-                result += ">";
-                result += children.map(jmlToStr).join("");
-                result += "</" + name + ">";
-            }
-
-            return result;
-        } else {
-            return String(jml);
-        }
-    } //}}}
-    /** Traverse the dom and apply style */
-    function applyStyle(domNode, styles) { //{{{
-        var styleObj, i, classes, children, style, prop, val;
-        classes = domNode.classList;
-        for(i = 0; i < classes.length; ++i) {
-            style = styles[classes[i]];
-            if(style) {
-                styleObj = domNode.style;
-                for(prop in style) {
-                    val = style[prop];
-                    if(typeof val === "number") {
-                        val = val + "px";
-                    }
-                    styleObj[prop] = val;
-                }
-            }
-        }
-        children = domNode.children;
-        for(i=0; i<children.length; ++i) {
-            applyStyle(children[i], styles);
-        }
-    } //}}}
-    var html = jmlToStr(["div",  //{{{
+    var jml = ["div",  //{{{
             ["div.page.frontPage", //{{{
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
                 ["div.patronWidget.w4.line", "Lånerstatus: Afl.&nbsp;12/1. Lån:&nbsp;7, Hjemkomne:&nbsp;3."],
@@ -241,8 +279,11 @@
                 ["div.w2.line.button", "Login"],
                 ["span.w6.spacing.largeWidget", ""],
             ], //}}}
-    ]); //}}}
-    console.log(html);
-    document.body.innerHTML = html;
-    applyStyle(document.body, genStyles());
+    ]; //}}}
+    // Control {{{1
+    // Test {{{1
+    var dom = jmlToDom(jml);
+    document.body.appendChild(dom);
+    domRecursiveApply(dom, genStyles());
+    console.log(jmlToDom("foo bar baz").constructor);
 })();
