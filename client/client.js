@@ -1,3 +1,4 @@
+// Copyright 2012 Rasmus Erik
 (function() {
     "use strict";
     function genStyles() { //{{{

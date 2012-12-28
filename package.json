@@ -1,0 +1,16 @@
+{
+  "name": "bibapp",
+  "version": "0.0.1",
+  "author": "Rasmus Erik",
+  "homepage": "http://github.com/rasmuserik/bibapp",
+  "description": "Hybrid mobile/html5 public library app",
+  "dependencies": {
+    "zombie": "*",
+    "express": "*",
+    "socket.io": "*"
+  },
+  "scripts": {
+      "test": "node test/test.js"
+  },
+  "engines": {"node": "*"}
+}

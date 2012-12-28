@@ -5,7 +5,9 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
-        <script src="main.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>window.socket = io.connect('http://localhost:8888');</script>
+        <script src="client.js"></script>
     </body>
 </html>
 
