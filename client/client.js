@@ -187,12 +187,19 @@
                     // info about arrival if arrived
                     arrived: "7/1 32 Husum"
                 } }}; //}}}
-        return {
+        return { //{{{
             content: content,
             cache: cache,
             patron: patron
         };
-    })();
+    })(); //}}}
+    function searchResults(query) { //{{{
+        if(data.cache.searches[query]) {
+            return data.cache.searches[query].results;
+        } else {
+            return [];
+        }
+    } //}}}
     window.data = data;
     // Views {{{1
     // Style {{{2
@@ -339,6 +346,22 @@
                 ["div.largeWidget.calendarWidget", 
                     ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]; 
     } //}}}
+    function resultsPage(query) {
+        function jmlResult(result) {
+            return ["div.searchResult.w6", 
+                        ["img.wn1.resultImg", {src: result.thumbUrl}],
+                        ["div.resultOrderButton.w1", "Bestil"],
+                        ["div.resultTitle", result.title],
+                        ["div.resultCreator", result.creator],
+                        ["div.resultDescription", result.description]];
+        };
+        return ["div.page.searchResults", //{{{
+                ["div.header", 
+                    ["span.backButton.w1.line", "back"],
+                    ["textarea.searchBox.w4.line", query],
+                    ["span.searchButton.w1.line", "søg"]],
+                ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
+    } //}}}
     var patronPage = ["div.page.patronInfo", //{{{
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
@@ -371,43 +394,6 @@
                         ["span.w1.line", "3/1"], 
                         ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
                         ["div.w1.renewAll.line", "slet"]]]]; //}}}
-    var resultsPage = ["div.page.searchResults", //{{{
-                ["div.header", 
-                    ["span.backButton.w1.line", "back"],
-                    ["textarea.searchBox.w4.line", "searchquery"],
-                    ["span.logoutButton.w1.line", "log ud"]],
-                ["div.content", //{{{
-                    ["div.searchResult.w6",
-                        ["img.wn1.resultImg", {src: "borked"}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", "Der var engang..."],
-                        ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]],
-                    ["div.searchResult.w6",
-                        ["img.wn1.resultImg", {src: "borked"}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", "Der var engang..."],
-                        ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]],
-                    ["div.searchResult.w6",
-                        ["img.wn1.resultImg", {src: "borked"}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", "Der var engang..."],
-                        ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]],
-                    ["div.searchResult.w6",
-                        ["img.wn1.resultImg", {src: "borked"}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", "Der var engang..."],
-                        ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]],
-                    ["div.searchResult.w6",
-                        ["img.wn1.resultImg", {src: "borked"}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", "Der var engang..."],
-                        ["div.resultCreator", "H. C. Andersen"],
-                        ["div.resultDescription", "Eventyr blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah"]]] //}}}
-            ]; //}}}
     var loginPage = ["div.page.login", //{{{
                 ["span.w6.spacing.largeWidget", ""],
                 ["div.w2.right", "Login:"],
@@ -423,8 +409,8 @@
     // Control {{{1
     // Test {{{1
     document.body.appendChild(jmlToDom(frontPage()));
+    document.body.appendChild(jmlToDom(resultsPage("sample search string")));
     document.body.appendChild(jmlToDom(patronPage));
-    document.body.appendChild(jmlToDom(resultsPage));
     document.body.appendChild(jmlToDom(loginPage));
     domRecursiveApply(document.body, genStyles());
 })();
