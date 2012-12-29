@@ -162,8 +162,13 @@
                 "830318:48781323": {
                     expireDate: 1357706097976,
                     id: "830318:48781323",
-                    title: "Some title",
-                    author: "Some author",
+                    title: "Some title 1",
+                    creator: "Some author"},
+                "730318:48781321": {
+                    expireDate: 1356706097976,
+                    id: "830318:48781321",
+                    title: "Some title 2",
+                    creator: "Some author 2",
                     // set renewRequest if we have requested a renew
                     renewRequest: true }},
             reservations: {
@@ -171,22 +176,23 @@
                     expireDate: 1356706097976,
                     reservationDate: 1356706097976,
                     id: "830138:48321421",
-                    title: "Some title",
-                    author: "Some author",
+                    title: "Some title 3",
+                    creator: "Some author",
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true
-                },
-                "830318:48781321": {
+                }},
+            arrived: {
+                "730318:48781321": {
                     expireDate: 1356706097976,
                     reservationDate: 1356706097976,
                     id: "830318:48781321",
-                    title: "Some title",
-                    author: "Some author",
+                    title: "Some title 4",
+                    creator: "Some author",
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true,
                     // info about arrival if arrived
-                    arrived: "7/1 32 Husum"
-                } }}; //}}}
+                    location: "7/1 32 Husum"
+                }} }; //}}}
         return { //{{{
             content: content,
             cache: cache,
@@ -202,10 +208,9 @@
     } //}}}
     window.data = data;
     // Views {{{1
-    // Style {{{2
     function genStyles() { //{{{
-        var width = 240;
-        var height = 320;
+        var width = 200;
+        var height = 300;
         var margin = (width / 40) & ~1;
         var unit = ((width - 7 * margin)/6) | 0;
         var margin0 = (width - 7 * margin - unit * 6) >> 1;
@@ -311,14 +316,12 @@
                 }
     
                 // Vis antal hjemkomne, eller reservationsstatus
+                var arrived = values(data.patron.arrived);
                 var reservations = values(data.patron.reservations);
-                if(reservations.length) {
-                    var arrived = reservations.filter(function(res) { return res.arrived; });
-                    if(arrived.length) {
-                        result += arrived.length + "\xa0" + (arrived.length === 1 ? "hjemkommet" : "hjemkomne");
-                    } else {
-                        result += reservations.length + "\xa0reservationer";
-                    }
+                if(arrived.length) {
+                    result += arrived.length + "\xa0" + (arrived.length === 1 ? "hjemkommet" : "hjemkomne");
+                } else if(reservations.length) {
+                    result += reservations.length + "\xa0reservationer";
                 }
                 return result;
             } else {
@@ -335,16 +338,18 @@
                 return ["div.widgetItem", ["span.widgetDate", formatDate(event.date)], " ", event.title];
             });
         } //}}}
-        return ["div.page.frontPage", 
-                ["input.searchLine.w5.line", {value: "foo"}],
-                ["div.searchButton.w1.line", "søg"],
-                ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
-                ["div.patronWidget.w4.line", patronWidgetContent()],
-                ["div.openingTime.w2.line", "Åbningstider"],
-                ["div.largeWidget.newsWidget", 
-                    ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
-                ["div.largeWidget.calendarWidget", 
-                    ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]; 
+        return ["div.page.frontPage",  //{{{
+                ["div.header", 
+                    ["input.searchLine.w5.line", {value: "foo"}],
+                    ["div.searchButton.w1.line", "søg"]],
+                ["div.content",
+                    ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
+                    ["div.patronWidget.w4.line", patronWidgetContent()],
+                    ["div.openingTime.w2.line", "Åbningstider"],
+                    ["div.largeWidget.newsWidget.w6", 
+                        ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
+                    ["div.largeWidget.calendarWidget.w6", 
+                        ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]];  //}}}
     } //}}}
     function resultsPage(query) { //{{{
         function jmlResult(result) {
@@ -354,10 +359,10 @@
                         ["div.resultTitle", result.title],
                         ["div.resultCreator", result.creator],
                         ["div.resultDescription", result.description]];
-        };
+        }
         return ["div.page.searchResults", //{{{
                 ["div.header", 
-                    ["span.backButton.w1.line", "back"],
+                    ["span.homeButton.w1.line", "home"],
                     ["textarea.searchBox.w4.line", query],
                     ["span.searchButton.w1.line", "søg"]],
                 ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
@@ -375,38 +380,54 @@
                 ["span.w6.spacing.largeWidget", ""]]; 
     }//}}}
     function patronPage() { //{{{
+        var content = ["div.content"];
+
+        function arrivedEntry(entry) {
+            return ["div",
+                ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator],
+                ["div.w2.renewAll.line", entry.location]];
+        }
+        function loanEntry(entry) {
+            return ["div",
+                ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator],
+                ["span.w1.date.line", {style: (entry.expireDate < Date.now()? "background: red" : "")}, formatDate(entry.expireDate)], 
+                ["div.w1.renewAll.line", "Forny"]];
+        }
+        function reservationEntry(entry) {
+            return ["div",
+                ["span.w5.spacing.bookentry.line", entry.title, ["br"], entry.creator],
+                ["div.w1.renewAll.line", "Slet"]];
+        }
+
+        var arrived = values(data.patron.arrived);
+        if(arrived.length) {
+            content.push(["div.w6.patronHeading", "Hjemkomne:"]);
+            content = content.concat(arrived.map(arrivedEntry));
+        }
+
+        var loans = values(data.patron.loans);
+        if(loans.length === 0) {
+            content.push(["div.w6.patronHeading", "Ingen hjemlån"]);
+        }
+        if(loans.length) {
+            loans.sort(function(a, b) { return a.expireDate - b.expireDate; });
+            content.push(["div.w5.patronHeading", "Lån:"]);
+            content.push(["div.w1.line.renewAll", "Forny alle"]);
+            content = content.concat(loans.map(loanEntry));
+        }
+
+        var reservations = values(data.patron.reservations);
+        if(reservations.length) {
+            content.push(["div.w6.patronHeading", "Reservationer:"]);
+            content = content.concat(reservations.map(reservationEntry));
+        }
+
         return ["div.page.patronInfo", 
                 ["div.header", 
-                    ["span.backButton.w1.line", "back"],
-                    ["span.patronStatus.w4.line", "Logget ind som ", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
+                    ["span.homeButton.w1.line", "home"],
+                    ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
                     ["span.logoutButton.w1.line", "log ud"]],
-                ["div.content",
-                    ["div.w6.patronHeading", "Hjemkomne reserveringer"],
-                    ["div",
-                        ["span.w2.line", "3/1 #42", ["br"], "husum"], 
-                        ["span.w4.spacing.bookentry.line", "Tusinde og en nat...", ["br"], "Scherazade"]],
-                    ["div.w6.patronHeading", "Hjemlån"],
-                    ["div",
-                        ["span.w1.date.line", "5/2"], 
-                        ["span.w4.bookentry.line", "Tusinde og en nat...", ["br"], "Scherazade"], 
-                        ["div.w1.renewAll.line", "Forny"]],
-                    ["div",
-                        ["span.w1.date.line", "5/2"], 
-                        ["span.w4.bookentry.line", "Tusinde og en nat...", ["br"], "Scherazade"], 
-                        ["div.w1.renewAll.line", "Forny"]],
-                    ["div.w6.patronHeading", "Reserveringer"],
-                    ["div",
-                        ["span.w1.line", "3/1"], 
-                        ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
-                        ["div.w1.renewAll.line", "slet"]],
-                    ["div",
-                        ["span.w1.line", "3/1"], 
-                        ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
-                        ["div.w1.renewAll.line", "slet"]],
-                    ["div",
-                        ["span.w1.line", "3/1"], 
-                        ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
-                        ["div.w1.renewAll.line", "slet"]]]]; 
+                content];
     }//}}}
     //}}}
     // Control {{{1
