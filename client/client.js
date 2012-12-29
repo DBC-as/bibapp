@@ -109,7 +109,7 @@
             for(var prop in style) {
                 var val = style[prop];
                 if(typeof val === "number") {
-                    val = val + "px";
+                    val = (val |0)  + "px";
                 }
                 styleObj[prop] = val;
             }
@@ -245,7 +245,7 @@
     window.data = data;
     // Views {{{1
     function genStyles() { //{{{
-        var width = 200;
+        var width = 240;
         var height = 300;
         var margin = (width / 40) & ~1;
         var unit = ((width - 7 * margin)/6) | 0;
@@ -255,12 +255,13 @@
             return css({
                 verticalAlign: "middle",
                 border: "none",
-                padding: 0,
+                paddingLeft: 0,
+                paddingRight: 0,
                 marginLeft: margin,
                 marginRight: 0,
                 width: unit * n + margin * (n-1),
                 display: "inline-block",
-                boxShadow: "1px 1px 4px rgba(0,0,0,1)"
+                //boxShadow: "1px 1px 4px rgba(0,0,0,1)"
             });
         } //}}}
         var result = { //{{{
@@ -278,35 +279,42 @@
             page: css({
                 //position: "relative",
                 verticalAlign: "middle",
-                //overflow: "hidden",
+                overflow: "hidden",
                 lineHeight: "100%",
                 fontSize: smallFont,
-                fontFamily: "sans-serif",
+                fontFamily: "arial, sans-serif",
                 border: "1px solid black",
-                margin: unit/2,
+                margin: margin,
                 padding: 0,
                 display: "inline-block",
                 width: width,
                 height: height,
-                background: "white"
+                color: "#110",
+                background: "#ffe",
             }),
             header: css({
                 position: "fixed",
-                height: unit+margin, width: width,
-                background: "rgba(255,255,255,.7)"
+                marginLeft: 0,
+                paddingLeft: 0,
+                marginTop: -margin * .5,
+                height: unit+margin * 1.5, width: width,
+                background: "rgba(0, 0, 32, .8)",
+                boxShadow: "0px 0px " + unit + "px rgba(32,32,0,1)",
+                color: "#ffc",
+                zIndex: "1"
             }),
             largeWidget: css({
                 marginTop: margin,
                 height: (height - unit * 3 - margin * 6) >>1,
                 marginLeft: margin,
                 marginRight: margin,
-                overflow: "hidden",
-                boxShadow: "1px 1px 4px rgba(0,0,0,1)"
+                overflow: "hidden"
             }),
             resultImg: css({
                 float: "left",
                 height: 1.618 * unit,
                 width: unit,
+                backgroundColor: "red",
                 marginRight: margin,
                 marginBottom: margin
             }).on("click", function() {
@@ -315,16 +323,47 @@
             }),
             resultOrderButton: css({
                 float: "right",
-                height: unit
+                width: unit,
+                height: 0,
+                background: "red",
+
+            }),
+            searchButton: css({
+                height: unit, width: unit,
             }),
             searchResult: css({
                 marginTop: margin,
                 height: 1.618 * unit,
-                overflow: "hidden"
+                overflow: "hidden",
+                 //boxShadow: "1px 1px 4px rgba(0,0,0,1)",
             }),
             headerPadding: css({ height: unit+margin }),
             w1: wn(1), w2: wn(2), w3: wn(3),
-            w4: wn(4), w5: wn(5), w6: wn(6)
+            w4: wn(4), w5: wn(5), w6: wn(6),
+            searchInput: css({
+                width: "100%",
+                marginLeft: 0,
+                marginTop: unit * .2,
+                height: unit * .6,
+                fontSize: smallFont,
+                border: "none",
+                backgrund: "rgba(255,255,255,0.4)",
+                boxShadow: "0px -1px 2px rgba(0,0,0,1)," +
+                           "-1px 0px 2px rgba(0,0,0,1)," +
+                            "0px 1px 2px rgba(255,255,255,1)," +
+                            "1px 0px 2px rgba(255,255,255,1)" ,
+                borderRadius: margin
+            }),
+            resultLine: css({
+                clear: "none",
+            }),
+            pageHeading: css({
+                paddingTop: .2 * unit,
+                paddingBottom: 0,
+                marginTop: margin,
+                fontSize: .6*unit,
+                height: .8 * unit,
+            })
         }; //}}}
         return result;
     } //}}}
@@ -376,10 +415,11 @@
         } //}}}
         return ["div.page.frontPage",  //{{{
                 ["div.header", 
-                    ["input.searchLine.w5.line", {value: "foo"}],
+                    ["div.searchLine.w5.line", 
+                        ["input.searchInput", {value: "foo"}]],
                     ["div.searchButton.w1.line", "søg"]],
                 ["div.content",
-                    ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
+                    ["div.biblogo.pageHeading.w6", "Kardemommeby Bibliotek"],
                     ["div.patronWidget.w4.line", patronWidgetContent()],
                     ["div.openingTime.w2.line", "Åbningstider"],
                     ["div.largeWidget.newsWidget.w6", 
@@ -389,18 +429,21 @@
     } //}}}
     function resultsPage(query) { //{{{
         function jmlResult(result) {
-            return ["div.searchResult.w6", 
-                        ["img.wn1.resultImg", {src: result.thumbUrl}],
-                        ["div.resultOrderButton.w1", "Bestil"],
-                        ["div.resultTitle", result.title],
-                        ["div.resultCreator", result.creator],
-                        ["div.resultDescription", result.description]];
+            return ["div", 
+                        ["div.searchResult.w1",
+                            ["img.resultImg", {src: result.thumbUrl}]],
+                        ["div.searchResult.w4",
+                            ["div.resultTitle.resultLine", result.title],
+                            ["div.resultCreator.resultLine", result.creator],
+                            ["div.resultDescription.resultLine", result.description]],
+                        ["div.w1.line", "Bestil"]];
         }
         // TODO: facets
         return ["div.page.searchResults", //{{{
                 ["div.header", 
                     ["span.homeButton.w1.line", "home"],
-                    ["textarea.searchBox.w4.line", query],
+                    ["div.searchLine.w4.line", 
+                        ["input.searchInput", {value: query}]],
                     ["span.searchButton.w1.line", "søg"]],
                 ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
     } //}}}
@@ -438,17 +481,17 @@
 
         var arrived = values(data.patron.arrived);
         if(arrived.length) {
-            content.push(["div.w6.patronHeading", "Hjemkomne:"]);
+            content.push(["div.w6.pageHeading.patronHeading", "Hjemkomne:"]);
             content = content.concat(arrived.map(arrivedEntry));
         }
 
         var loans = values(data.patron.loans);
         if(loans.length === 0) {
-            content.push(["div.w6.patronHeading", "Ingen hjemlån"]);
+            content.push(["div.w6.pageHeading.patronHeading", "Ingen hjemlån"]);
         }
         if(loans.length) {
             loans.sort(function(a, b) { return a.expireDate - b.expireDate; });
-            content.push(["div.w5.patronHeading", "Lån:"]);
+            content.push(["div.w5.pageHeading.patronHeading", "Lån:"]);
             content.push(["div.w1.line.renewAll", "Forny alle"]);
             content = content.concat(loans.map(loanEntry));
         }
