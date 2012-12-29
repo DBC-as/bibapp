@@ -241,26 +241,35 @@
         return result;
     } //}}}
     // Layout {{{2
-    var frontPage = ["div.page.frontPage", //{{{
+    function frontPage() {
+        function patronWidgetContent() {
+            return "Lånerstatus: Afl.&nbsp;12/1. Lån:&nbsp;7, Hjemkomne:&nbsp;3.";
+        }
+        function newsWidgetContent() {
+            return [["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]];
+        };
+        function calendarWidgetContent() {
+            return [["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
+                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]];
+        };
+        return ["div.page.frontPage", //{{{
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
-                ["div.patronWidget.w4.line", "Lånerstatus: Afl.&nbsp;12/1. Lån:&nbsp;7, Hjemkomne:&nbsp;3."],
+                ["div.patronWidget.w4.line", patronWidgetContent()],
                 ["div.openingTime.w2.line", "Åbningstider"],
                 ["input.searchLine.w5.line", {value: "foo"}],
                 ["div.searchButton.w1.line", "søg"],
                 ["div.largeWidget.newsWidget", 
-                    ["div.widgetTitle", "News"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]],
+                    ["div.widgetTitle", "News"]].concat(newsWidgetContent()),
                 ["div.largeWidget.calendarWidget", 
-                    ["div.widgetTitle", "Kalender"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]]]; //}}}
+                    ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]; 
+    } //}}}
     var patronPage = ["div.page.patronInfo", //{{{
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
@@ -344,7 +353,7 @@
     //}}}
     // Control {{{1
     // Test {{{1
-    document.body.appendChild(jmlToDom(frontPage));
+    document.body.appendChild(jmlToDom(frontPage()));
     document.body.appendChild(jmlToDom(patronPage));
     document.body.appendChild(jmlToDom(resultsPage));
     document.body.appendChild(jmlToDom(loginPage));
