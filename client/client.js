@@ -1,5 +1,5 @@
 // Copyright 2012 Rasmus Erik
-/*global document:true*/
+/*global document:true window:true*/
 (function() {
     "use strict";
     // Util {{{1
@@ -9,7 +9,7 @@
             result.push(obj[key]);
         }
         return result;
-    }; //}}}
+    } //}}}
     function formatDate(n) { //{{{
         var d = new Date(n);
         return d.getDate() + "/" + (d.getMonth() + 1);
@@ -174,7 +174,7 @@
                     title: "Some title",
                     author: "Some author",
                     // set deleteRequest if we want to delete the reservation
-                    deleteRequest: true,
+                    deleteRequest: true
                 },
                 "830318:48781321": {
                     expireDate: 1356706097976,
@@ -185,7 +185,7 @@
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true,
                     // info about arrival if arrived
-                    //arrived: "7/1 32 Husum"
+                    arrived: "7/1 32 Husum"
                 } }}; //}}}
         return {
             content: content,
@@ -263,7 +263,7 @@
                 marginBottom: margin
             }).on("click", function() {
                 // TODO: remove this example
-                alert("click");
+                //alert("click");
             }),
             resultOrderButton: css({
                 float: "right",
@@ -322,12 +322,12 @@
             return data.content.news.map(function(news) {
                 return ["div.widgetItem", ["span.widgetDate", formatDate(news.date)], " ", news.title];
             });
-        }; //}}}
+        } //}}}
         function calendarWidgetContent() { //{{{
             return data.content.calendar.map(function(event) {
                 return ["div.widgetItem", ["span.widgetDate", formatDate(event.date)], " ", event.title];
             });
-        }; //}}}
+        } //}}}
         return ["div.page.frontPage", 
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
                 ["div.patronWidget.w4.line", patronWidgetContent()],
