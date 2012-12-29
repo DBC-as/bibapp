@@ -374,7 +374,7 @@
                 ["div.w2.line.button", "Login"],
                 ["span.w6.spacing.largeWidget", ""]]; 
     }//}}}
-    function patronPage() = { //{{{
+    function patronPage() { //{{{
         return ["div.page.patronInfo", 
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
