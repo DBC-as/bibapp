@@ -336,17 +336,17 @@
             });
         } //}}}
         return ["div.page.frontPage", 
+                ["input.searchLine.w5.line", {value: "foo"}],
+                ["div.searchButton.w1.line", "søg"],
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
                 ["div.patronWidget.w4.line", patronWidgetContent()],
                 ["div.openingTime.w2.line", "Åbningstider"],
-                ["input.searchLine.w5.line", {value: "foo"}],
-                ["div.searchButton.w1.line", "søg"],
                 ["div.largeWidget.newsWidget", 
                     ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
                 ["div.largeWidget.calendarWidget", 
                     ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]; 
     } //}}}
-    function resultsPage(query) {
+    function resultsPage(query) { //{{{
         function jmlResult(result) {
             return ["div.searchResult.w6", 
                         ["img.wn1.resultImg", {src: result.thumbUrl}],
@@ -362,7 +362,20 @@
                     ["span.searchButton.w1.line", "søg"]],
                 ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
     } //}}}
-    var patronPage = ["div.page.patronInfo", //{{{
+    function loginPage() {//{{{
+        return ["div.page.login", 
+                ["span.w6.spacing.largeWidget", ""],
+                ["div.w2.right", "Login:"],
+                ["input.w4.line", ""],
+                ["div.w2.right", "Kode:"],
+                ["input.w4.line", {type: "password"}, ""],
+                ["span.w2.spacing", ""],
+                ["div.w2.line.button", "Annuller"],
+                ["div.w2.line.button", "Login"],
+                ["span.w6.spacing.largeWidget", ""]]; 
+    }//}}}
+    function patronPage() = { //{{{
+        return ["div.page.patronInfo", 
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
                     ["span.patronStatus.w4.line", "Logget ind som ", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
@@ -393,24 +406,14 @@
                     ["div",
                         ["span.w1.line", "3/1"], 
                         ["span.w4.bookentry.line", "Folkeeventyr", ["br"], "Brødrene Grimm"], 
-                        ["div.w1.renewAll.line", "slet"]]]]; //}}}
-    var loginPage = ["div.page.login", //{{{
-                ["span.w6.spacing.largeWidget", ""],
-                ["div.w2.right", "Login:"],
-                ["input.w4.line", ""],
-                ["div.w2.right", "Kode:"],
-                ["input.w4.line", {type: "password"}, ""],
-                ["span.w2.spacing", ""],
-                ["div.w2.line.button", "Annuller"],
-                ["div.w2.line.button", "Login"],
-                ["span.w6.spacing.largeWidget", ""]
-            ]; //}}}
+                        ["div.w1.renewAll.line", "slet"]]]]; 
+    }//}}}
     //}}}
     // Control {{{1
     // Test {{{1
     document.body.appendChild(jmlToDom(frontPage()));
     document.body.appendChild(jmlToDom(resultsPage("sample search string")));
-    document.body.appendChild(jmlToDom(patronPage));
-    document.body.appendChild(jmlToDom(loginPage));
+    document.body.appendChild(jmlToDom(loginPage()));
+    document.body.appendChild(jmlToDom(patronPage()));
     domRecursiveApply(document.body, genStyles());
 })();
