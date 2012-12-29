@@ -360,6 +360,7 @@
                         ["div.resultCreator", result.creator],
                         ["div.resultDescription", result.description]];
         }
+        // TODO: facets
         return ["div.page.searchResults", //{{{
                 ["div.header", 
                     ["span.homeButton.w1.line", "home"],
@@ -429,7 +430,14 @@
                     ["span.logoutButton.w1.line", "log ud"]],
                 content];
     }//}}}
+    // TODO: Single-book/material page
+    // TODO: News page
+    // TODO: Calendar page (header: home-icon, overskrift)
     //}}}
+    //
+    // TODO: transitions (evt. to/from topright-button)
+    // TODO: autoscrolling-infinite-list
+
     // Control {{{1
     // Test {{{1
     document.body.appendChild(jmlToDom(frontPage()));

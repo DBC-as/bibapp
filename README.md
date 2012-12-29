@@ -2,7 +2,7 @@
 
 Mobile/html5 public library app.
 
-## Roadmap
+# Roadmap
 
 - Version 0.1
     - Søg bog
@@ -37,101 +37,24 @@ Mobile/html5 public library app.
     - facetbrowser
         - årstalsgraf
 
-### Noter
+# Notes
 
-- AppMap (Home)
-    - Forside:
-        - Top-bar: 
-            - home-icon (grayed)
-            - søgefelt
-            - søgeikon
-        - Bibliotekslogo
-        - Nyheds-widget
-        - Kalender-widget
-        - Åbningstider-button
-        - Lånerstatus
-    - Søgeresultater
-        - Top-bar: 
-            - home-icon
-            - søgebar (overskrift), søgeikon 
-        - Facet-bar (later)
-        - Poster
-            - Post-short-info+icon
-            - Bestil-knap
-            - Expanderende post med mere info
-    - Info
-        - Top-bar: home-icon, _Nyheder_ (overskrift), kalender, åbningstider
-        - Nyheder
-        - Kalender
-        - Åbningstider
-    - Lånerstatus
-        - Top-bar: home-icon, _Lånerstatus_ (overskrift) Opdateret (??/?? | idag ??:??), Log ud
-        - Hjemkomne
-        - Lån (forny-alt-knap)
-            - afle
-        - Bestillinger
-            - bestillingsdato (afbestil)
-- Login-popup
-
-- Sider
-    - Persistent top-bar
-        - Always logo/home-icon
-    - Forside
-        - Topbar
-            - Home
-            - Søgefelt
-            - Søgeikon
-        - Biblioteksnavn
-        - Lånerstatus-widget
-        - Nyheds-widget
-        - Arrangements-widget
-        - NB: transition to/from to corner button
-    - Søgeresultater
-        - Topbar
-            - Home
-            - Søgefelt
-            - Søgeikon
-        - Liste af bøger
-            - Billede
-            - Titel/forfatter/teaser
-            - Status: hjemme/udlånt/lånt/bestilt...
-            - Expanding decription
-    - Nyheder
-        - Billede, titel, teaser,
-    - Arrangementer
-        - Titel, tid, sted, teaser, billede
-    - Bestillinger / hjemkomne bøger
-        - Titel, bestillingsdat
-    - Lånerstatus / forny lån
-        - Topbar
-            - Home
-            - Forny alle
-        - Hjemkomne bøger, sorteret efter afhentningsdato
-        - Lånte bøger, sorteret efter afleveringsdato
-        - Bestillinger
-    - Min side
-        - Indstillinger for bestilling / afhentning / ...
-- Komponenter
-    - Top-bar
-        - Home/library-icon
-        - Søgefelt med autocomplete
-        - Søge-knap
-    - (Uendelig) liste af elementer af fast størrelse
-    - Bottom-bar
-        - 
-        - Settings
-    - Side-scrolling page w/back-button when iOS app + dispatch function based on hash.
-- Modelnoter
-    - BibEntry-object, skabes og vises uden data(Loading), og får update-event når data er hentet
-
-
-----
-
-     _______
-    |⌂_____✍|
-    |       |
-    | ...   |
-    |       |
-    |       |
-    |       |
-
+- bibapp-prototype
+    - backend
+        - search-results
+        - individual result
+            - behind html5-history-api for url.
+            - deliver as static html with schema (ie. schema.org )
+                - crawlable from google etc.
+            - links to
+                - http://bibliotek.kk.dk/ting/object/870971%3A85429353
+                - http://bibliotek.dk/linkme.php?ccl=lid%3D85429353+og+lok%3D870971
+        - lånerstatus
+- production stack
+    - api.solsort.com - socket.io / node.js server on torqhost w/ssl
+        - NB: stats collected via javascript, transferred via socket.io
+    - solsort.com - etc. nginx static, behind cloudflare
+    - (later) varnish in front to enable websockets
+    - couchbase for DB
+    - closure compiler for optimisation and library
+    - app packaging via cordova
