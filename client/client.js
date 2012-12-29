@@ -246,7 +246,7 @@
     // Views {{{1
     function genStyles() { //{{{
         var width = 240;
-        var height = 300;
+        var height = 320;
         var margin = (width / 40) & ~1;
         var unit = ((width - 7 * margin)/6) | 0;
         var margin0 = (width - 7 * margin - unit * 6) >> 1;
@@ -265,6 +265,9 @@
             });
         } //}}}
         var result = { //{{{
+            patronStatus: css({
+                textAlign: "center",
+            }),
             line: css({
                 marginTop: margin,
                 //textAlign: "center",
@@ -275,6 +278,19 @@
                 top: unit+margin,
                 left: 0,
                 width: width
+            }),
+            icon: css({
+                top: 0.05 *unit - 1,
+                left: 0,
+                width: unit - 2,
+                display: "inline-block",
+                position: "relative",
+                paddingTop: 0.15 * unit, 
+                paddingBottom: 0.15 * unit, 
+                border: "1px outset",
+                borderRadius: margin,
+                textAlign: "center",
+                fontSize: unit * 0.65 - 2,
             }),
             page: css({
                 //position: "relative",
@@ -296,8 +312,8 @@
                 position: "fixed",
                 marginLeft: 0,
                 paddingLeft: 0,
-                marginTop: -margin * .5,
-                height: unit+margin * 1.5, width: width,
+                marginTop: 0,
+                height: unit+margin * 1, width: width,
                 background: "rgba(0, 0, 32, .8)",
                 boxShadow: "0px 0px " + unit + "px rgba(32,32,0,1)",
                 color: "#ffc",
@@ -342,9 +358,10 @@
             w4: wn(4), w5: wn(5), w6: wn(6),
             searchInput: css({
                 width: "100%",
+                textAlign: "center",
                 marginLeft: 0,
-                marginTop: unit * .2,
-                height: unit * .6,
+                marginTop: unit * .05,
+                height: unit * .65,
                 fontSize: smallFont,
                 border: "none",
                 backgrund: "rgba(255,255,255,0.4)",
@@ -416,8 +433,8 @@
         return ["div.page.frontPage",  //{{{
                 ["div.header", 
                     ["div.searchLine.w5.line", 
-                        ["input.searchInput", {value: "foo"}]],
-                    ["div.searchButton.w1.line", "søg"]],
+                        ["input.searchInput", {placeholder: "søg"}]],
+                    ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
                     ["div.biblogo.pageHeading.w6", "Kardemommeby Bibliotek"],
                     ["div.patronWidget.w4.line", patronWidgetContent()],
@@ -436,15 +453,16 @@
                             ["div.resultTitle.resultLine", result.title],
                             ["div.resultCreator.resultLine", result.creator],
                             ["div.resultDescription.resultLine", result.description]],
-                        ["div.w1.line", "Bestil"]];
+                        ["span.homeButton.w1.line", ["span.icon.icon-shopping-cart", ""]]];
+                        //["div.w1.line", "Bestil"]];
         }
         // TODO: facets
         return ["div.page.searchResults", //{{{
                 ["div.header", 
-                    ["span.homeButton.w1.line", "home"],
+                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["div.searchLine.w4.line", 
                         ["input.searchInput", {value: query}]],
-                    ["span.searchButton.w1.line", "søg"]],
+                    ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
     } //}}}
     function loginPage() {//{{{
@@ -504,9 +522,9 @@
 
         return ["div.page.patronInfo", 
                 ["div.header", 
-                    ["span.homeButton.w1.line", "home"],
+                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
-                    ["span.logoutButton.w1.line", "log ud"]],
+                    ["span.homeButton.w1.line", ["span.icon.icon-signout", ""]]],
                 content];
     }//}}}
     // TODO: Single-book/material page
