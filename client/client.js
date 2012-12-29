@@ -3,6 +3,25 @@
 (function() {
     "use strict";
     // Util {{{1
+    function values(obj) {//{{{
+        var result = [];
+        for(var key in obj) {
+            result.push(obj[key]);
+        }
+        return result;
+    }; //}}}
+    function formatDate(n) { //{{{
+        var d = new Date(n);
+        return d.getDate() + "/" + (d.getMonth() + 1);
+    } //}}}
+    function formatDateOrTime(n) { //{{{
+        if(Date.now() - n < 22*60*60*1000) {
+            var d = new Date(n);
+            return d.getHours() + ":" + d.getMinutes();
+        } else {
+            return formatDate(n);
+        }
+    } //}}}
     function jmlToDom(jml) { //{{{
         if(Array.isArray(jml)) {
             var children;
@@ -70,10 +89,10 @@
         });
         return this;
     }; //}}}
+    //}}}
     function css(obj) { //{{{
         return (new DomProcess()).css(obj);
     } //}}}
-    //}}}
     function domRecursiveApply(domNode, table) { //{{{
         var classes = domNode.classList;
         for(var i = 0; i < classes.length; ++i) {
@@ -88,22 +107,33 @@
         }
     } //}}}
     // Model {{{1
-    (function() {
-        var content = {
+    var data = (function() {
+        // Sample items {{{
+        var sampleEvent = {
+            date: 1356706097976,
+            title: "Nytårskursus", 
+            description: "Kursus om ...",
+            url: "http://bibilitek.kk.dk/foo/bar...html",
+            thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"};
+        var sampleNews = {
+            date: 1356706097976,
+            title: "Glædeligt nytår",
+            description: "starten af en artikel ....",
+            url: "http://bibilitek.kk.dk/foo/bar...html",
+            thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"};
+        var sampleSearchResult = {
+            id: "830318:48781321",
+            title: "Samlede Eventyr",
+            creator: "H. C. Andersen",
+            type: "book",
+            thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
+            description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
+            status: "available"}; //}}}
+        var content = { //{{{
             lastSync: 1356706097976,
-            calendar: [{
-                date: 1356706097976,
-                title: "Glædeligt nytår",
-                description: "starten af en artikel ....",
-                url: "http://bibilitek.kk.dk/foo/bar...html",
-                thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"}],
-            news: [{
-                date: 1356706097976,
-                title: "Nytårskursus",
-                description: "Kursus om ...",
-                url: "http://bibilitek.kk.dk/foo/bar...html",
-                thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"}]};
-        var cache = {
+            calendar: [sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent],
+            news: [sampleNews, sampleNews, sampleNews, sampleNews, sampleNews, sampleNews]}; //}}}
+        var cache = { //{{{
             materials: {
                 "830318:48781321": {
                     lastSync: 1356706097976,
@@ -122,27 +152,30 @@
                     id: "sample search string",
                     lastSync: 1356706097976,
                     resultCount: 1324,
-                    resultsLoaded: 20,
-                    results: [{
-                        id: "830318:48781321",
-                        title: "Samlede Eventyr",
-                        creator: "H. C. Andersen",
-                        type: "book",
-                        thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
-                        description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
-                        status: "available"}]} }};
-        var patronInfo = {
+                    resultsLoaded: 10,
+                    results: [sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, 
+                              sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult]} }}; //}}}
+        var patron = { //{{{
             lastSync: Date.now(),
             name: "Joe User",
             loans: {
-                "830318:48781321": {
-                    expireDate: 1356706097976,
-                    id: "830318:48781321",
+                "830318:48781323": {
+                    expireDate: 1357706097976,
+                    id: "830318:48781323",
                     title: "Some title",
                     author: "Some author",
                     // set renewRequest if we have requested a renew
                     renewRequest: true }},
             reservations: {
+                "830138:48321421": {
+                    expireDate: 1356706097976,
+                    reservationDate: 1356706097976,
+                    id: "830138:48321421",
+                    title: "Some title",
+                    author: "Some author",
+                    // set deleteRequest if we want to delete the reservation
+                    deleteRequest: true,
+                },
                 "830318:48781321": {
                     expireDate: 1356706097976,
                     reservationDate: 1356706097976,
@@ -152,10 +185,17 @@
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true,
                     // info about arrival if arrived
-                    arrived: "7/1 32 Husum"} }};
+                    //arrived: "7/1 32 Husum"
+                } }}; //}}}
+        return {
+            content: content,
+            cache: cache,
+            patron: patron
+        };
     })();
+    window.data = data;
     // Views {{{1
-    // Actual style {{{2
+    // Style {{{2
     function genStyles() { //{{{
         var width = 240;
         var height = 320;
@@ -241,39 +281,68 @@
         return result;
     } //}}}
     // Layout {{{2
-    function frontPage() {
-        function patronWidgetContent() {
-            return "Lånerstatus: Afl.&nbsp;12/1. Lån:&nbsp;7, Hjemkomne:&nbsp;3.";
-        }
-        function newsWidgetContent() {
-            return [["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]];
-        };
-        function calendarWidgetContent() {
-            return [["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"],
-                    ["div.widgetItem", ["span.widgetDate", "29/12"], "some item text"]];
-        };
-        return ["div.page.frontPage", //{{{
+    function frontPage() { //{{{
+        function patronWidgetContent() { //{{{
+            // Vis lånerstatus hvis logget ind, samt synkroniseret indenfor
+            // det sidste halve døgn.
+            if(data.patron && data.patron.lastSync > Date.now() - 12*60*60*1000) {
+                var result = "";
+
+                // Vis antal lån, og hvornår næste aflevering.
+                var loans = values(data.patron.loans);
+                if(loans.length) {
+                    result += loans.length + "\xa0lån. ";
+                    result += "Aflever\xa0";
+                    var nextTime = Math.min.apply(Math, loans.map(function(loan) { return loan.expireDate; }));
+                    if(nextTime < Date.now()) {
+                        result += "nu. ";
+                    } else {
+                        result += formatDate(nextTime) + " ";
+                    }
+                } else {
+                    result += "Ingen\xa0lån";
+                }
+    
+                // Vis antal hjemkomne, eller reservationsstatus
+                var reservations = values(data.patron.reservations);
+                if(reservations.length) {
+                    var arrived = reservations.filter(function(res) { return res.arrived; });
+                    if(arrived.length) {
+                        result += arrived.length + "\xa0" + (arrived.length === 1 ? "hjemkommet" : "hjemkomne");
+                    } else {
+                        result += reservations.length + "\xa0reservationer";
+                    }
+                }
+                return result;
+            } else {
+                return "Lånerstatus";
+            }
+        } //}}}
+        function newsWidgetContent() { //{{{
+            return data.content.news.map(function(news) {
+                return ["div.widgetItem", ["span.widgetDate", formatDate(news.date)], " ", news.title];
+            });
+        }; //}}}
+        function calendarWidgetContent() { //{{{
+            return data.content.calendar.map(function(event) {
+                return ["div.widgetItem", ["span.widgetDate", formatDate(event.date)], " ", event.title];
+            });
+        }; //}}}
+        return ["div.page.frontPage", 
                 ["div.biblogo.w6.line", "Kardemommeby bibliotek"],
                 ["div.patronWidget.w4.line", patronWidgetContent()],
                 ["div.openingTime.w2.line", "Åbningstider"],
                 ["input.searchLine.w5.line", {value: "foo"}],
                 ["div.searchButton.w1.line", "søg"],
                 ["div.largeWidget.newsWidget", 
-                    ["div.widgetTitle", "News"]].concat(newsWidgetContent()),
+                    ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
                 ["div.largeWidget.calendarWidget", 
                     ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]; 
     } //}}}
     var patronPage = ["div.page.patronInfo", //{{{
                 ["div.header", 
                     ["span.backButton.w1.line", "back"],
-                    ["span.patronStatus.w4.line", "Logget ind som Joe User", ["br"], "Opdateret i dag 15:31"],
+                    ["span.patronStatus.w4.line", "Logget ind som ", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
                     ["span.logoutButton.w1.line", "log ud"]],
                 ["div.content",
                     ["div.w6.patronHeading", "Hjemkomne reserveringer"],
