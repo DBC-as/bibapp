@@ -39,17 +39,17 @@ Mobile/html5 public library app.
 
 # Notes
 
-- bibapp-prototype
-    - backend
-        - search-results
-        - individual result
-            - behind html5-history-api for url.
-            - deliver as static html with schema (ie. schema.org )
-                - crawlable from google etc.
-            - links to
-                - http://bibliotek.kk.dk/ting/object/870971%3A85429353
-                - http://bibliotek.dk/linkme.php?ccl=lid%3D85429353+og+lok%3D870971
-        - lånerstatus
+- backend
+    - search-results
+    - individual result
+        - behind html5-history-api for url.
+        - deliver as static html with schema (ie. schema.org )
+            - crawlable from google etc.
+        - links to
+            - http://bibliotek.kk.dk/ting/object/870971%3A85429353
+            - http://bibliotek.dk/linkme.php?ccl=lid%3D85429353+og+lok%3D870971
+    - lånerstatus
+        - auth via openauth or similar
 - production stack
     - api.solsort.com - socket.io / node.js server on torqhost w/ssl
         - NB: stats collected via javascript, transferred via socket.io
