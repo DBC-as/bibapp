@@ -17,7 +17,7 @@
     function formatDateOrTime(n) { //{{{
         if(Date.now() - n < 22*60*60*1000) {
             var d = new Date(n);
-            return d.getHours() + ":" + d.getMinutes();
+            return "i dag " + d.getHours() + ":" + String(100 + d.getMinutes()).slice(1);
         } else {
             return formatDate(n);
         }
@@ -191,7 +191,7 @@
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true,
                     // info about arrival if arrived
-                    location: "7/1 32 Husum"
+                    location: "7/1 nr.\xa032 Husum"
                 }} }; //}}}
         return { //{{{
             content: content,
@@ -370,13 +370,13 @@
     function loginPage() {//{{{
         return ["div.page.login", 
                 ["span.w6.spacing.largeWidget", ""],
-                ["div.w2.right", "Login:"],
+                ["div.w2.right", "Brugerid:"],
                 ["input.w4.line", ""],
-                ["div.w2.right", "Kode:"],
+                ["div.w2.right", "Kodeord:"],
                 ["input.w4.line", {type: "password"}, ""],
                 ["span.w2.spacing", ""],
                 ["div.w2.line.button", "Annuller"],
-                ["div.w2.line.button", "Login"],
+                ["div.w2.line.button", "Log ind"],
                 ["span.w6.spacing.largeWidget", ""]]; 
     }//}}}
     function patronPage() { //{{{
