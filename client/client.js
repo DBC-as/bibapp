@@ -48,8 +48,10 @@
                 ++pos;
             }
             return elem;
-        } else {
+        } else if(typeof jml === "string" || typeof jml === "number") {
             return document.createTextNode(jml);
+        } else {
+            return jml;
         }
     } //}}}
     function jmlToStr(jml) { //{{{
@@ -149,20 +151,20 @@
             date: 1356706097976,
             title: "Nytårskursus", 
             description: "Kursus om ...",
-            url: "http://bibilitek.kk.dk/foo/bar...html",
-            thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"};
+            url: "http://bibilitek.example.com/foo/bar...html",
+            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"};
         var sampleNews = {
             date: 1356706097976,
             title: "Glædeligt nytår",
             description: "starten af en artikel ....",
-            url: "http://bibilitek.kk.dk/foo/bar...html",
-            thumbUrl: "http://bibliotek.kk.dk/foo/bar...jpg"};
+            url: "http://bibilitek.example.com/foo/bar...html",
+            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"};
         var sampleSearchResult = {
             id: "830318:48781321",
             title: "Samlede Eventyr",
             creator: "H. C. Andersen",
             type: "book",
-            thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
+            thumbUrl: "http://bibliotek.example.com/foo/bar...",
             description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
             status: "available"}; //}}}
         var content = { //{{{
@@ -177,7 +179,7 @@
                     title: "Samlede Eventyr",
                     creator: "H. C. Andersen",
                     type: "book",
-                    thumbUrl: "http://bibliotek.kk.dk/foo/bar...",
+                    thumbUrl: "http://bibliotek.example.com/foo/bar...",
                     description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
                     topic: ["dk5:89.13", "eventyr"],
                     isbn: "891384328401",
@@ -244,9 +246,7 @@
     } //}}}
     window.data = data;
     // Views {{{1
-    function genStyles() { //{{{
-        var width = 240;
-        var height = 320;
+    function genStyles(width, height) { //{{{
         var margin = (width / 40) & ~1;
         var unit = ((width - 7 * margin)/6) | 0;
         var margin0 = (width - 7 * margin - unit * 6) >> 1;
@@ -273,6 +273,14 @@
                 //textAlign: "center",
                 height: unit
             }),
+            homeButton: css({
+            }).on("click mousedown touch", function() {
+                transition(frontPage());
+            }),
+            patronWidget: css({
+            }).on("click mousedown touch", function() {
+                transition(patronPage());
+            }),
             content: css({
                 position: "relative",
                 top: unit+margin,
@@ -293,18 +301,13 @@
                 fontSize: unit * 0.65 - 2,
             }),
             page: css({
-                //position: "relative",
                 verticalAlign: "middle",
-                overflow: "hidden",
                 lineHeight: "100%",
                 fontSize: smallFont,
                 fontFamily: "arial, sans-serif",
-                border: "1px solid black",
-                margin: margin,
+                margin: 0,
                 padding: 0,
                 display: "inline-block",
-                width: width,
-                height: height,
                 color: "#110",
                 background: "#ffe",
             }),
@@ -346,6 +349,9 @@
             }),
             searchButton: css({
                 height: unit, width: unit,
+
+            }).on("click mousedown touch", function() {
+                transition(jmlToDom(resultsPage("sample search string")));
             }),
             searchResult: css({
                 marginTop: margin,
@@ -375,16 +381,16 @@
                 clear: "none",
             }),
             pageHeading: css({
-                paddingTop: .2 * unit,
+                paddingTop: 0.2 * unit,
                 paddingBottom: 0,
                 marginTop: margin,
-                fontSize: .6*unit,
-                height: .8 * unit,
+                fontSize: 0.6 * unit,
+                height: 0.8 * unit,
             })
         }; //}}}
         return result;
     } //}}}
-    // Layout {{{2
+    // Layout {{{
     function frontPage() { //{{{
         function patronWidgetContent() { //{{{
             // Vis lånerstatus hvis logget ind, samt synkroniseret indenfor
@@ -453,7 +459,7 @@
                             ["div.resultTitle.resultLine", result.title],
                             ["div.resultCreator.resultLine", result.creator],
                             ["div.resultDescription.resultLine", result.description]],
-                        ["span.homeButton.w1.line", ["span.icon.icon-shopping-cart", ""]]];
+                        ["span.orderButton.w1.line", ["span.icon.icon-shopping-cart", ""]]];
                         //["div.w1.line", "Bestil"]];
         }
         // TODO: facets
@@ -524,22 +530,93 @@
                 ["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
-                    ["span.homeButton.w1.line", ["span.icon.icon-signout", ""]]],
+                    ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
                 content];
     }//}}}
     // TODO: Single-book/material page
     // TODO: News page
     // TODO: Calendar page (header: home-icon, overskrift)
     //}}}
-    //
+    // Transitions {{{
+    var view = undefined;
+    function initView(page) {
+        window.view = view = {};
+        view.width = Math.min(window.innerHeight, window.innerWidth);
+        view.height = window.innerHeight;
+        view.current = jmlToDom(page);
+        document.body.style.padding = document.body.style.margin = "0px";
+        while(document.body.childNodes.length) {
+            document.body.removeChild(document.body.childNodes[0]);
+        }
+        transition(page);
+    }
+    function posLeft() {
+        return css({
+            position: "absolute",
+            height: view.height,
+            width: view.width,
+            left: - view.width,
+            top: 0,
+        });
+    }
+    var transitioning = false;
+    function transition(page) {
+        if(!view) {
+            initView(page);
+            return;
+        }
+        if(transitioning) {
+            return;
+        }
+        transitioning = true;
+        var style = view.current.style;
+        view.prev = view.current;
+        var time = 0.8;
+        var transOn = "all " + time + "s ease";
+        var transOff = "all 0s";
+        css({
+            left: "0px",
+            right: "0px",
+            transition: transOn,
+            mozTransition: transOn,
+            webkitTransition: transOn,
+        }).apply(view.current);
+
+        view.current = jmlToDom(page);
+        domRecursiveApply(view.current, genStyles(view.width, view.height));
+        css({
+            height: view.height,
+            width: view.width,
+            position: "absolute",
+            left: view.width,
+            right: "0px",
+            transition: transOn,
+            mozTransition: transOn,
+            webkitTransition: transOn,
+        }).apply(view.current);
+        document.body.appendChild(view.current);
+        window.setTimeout(function() {
+            style.left = - view.width + "px"
+            view.current.style.left = 0;
+        }, 0);
+        window.setTimeout(function() {
+            console.log(document.body.childNodes.length);
+            console.log(document.body.childNodes[0]);
+            console.log(document.body.childNodes[1]);
+            while(document.body.childNodes.length > 1) {
+                document.body.removeChild(document.body.childNodes[0]);
+            }
+            transitioning = false;
+        }, 1100 * time);
+
+    }
+    // }}}
     // TODO: transitions (evt. to/from topright-button)
     // TODO: autoscrolling-infinite-list
 
     // Control {{{1
     // Test {{{1
-    document.body.appendChild(jmlToDom(frontPage()));
-    document.body.appendChild(jmlToDom(resultsPage("sample search string")));
-    document.body.appendChild(jmlToDom(loginPage()));
-    document.body.appendChild(jmlToDom(patronPage()));
-    domRecursiveApply(document.body, genStyles());
+    document.body.onload = function() {
+        transition(frontPage());
+    };
 })();
