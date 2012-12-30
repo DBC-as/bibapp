@@ -3,6 +3,11 @@
 (function() {
     "use strict";
     // Util {{{1
+    function urlUnescape(str) {
+        return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
+            return String.fromCharCode(window.parseInt(code.slice(1), 16));
+        });
+    };
     function values(obj) {//{{{
         var result = [];
         for(var key in obj) {
@@ -275,11 +280,11 @@
             }),
             homeButton: css({
             }).on("click mousedown touch", function() {
-                transition(frontPage());
+                go("home");
             }),
             patronWidget: css({
             }).on("click mousedown touch", function() {
-                transition(patronPage());
+                go("patron");
             }),
             content: css({
                 position: "relative",
@@ -351,7 +356,7 @@
                 height: unit, width: unit,
 
             }).on("click mousedown touch", function() {
-                transition(jmlToDom(resultsPage("sample search string")));
+                go("search/sample search string");
             }),
             searchResult: css({
                 marginTop: margin,
@@ -442,7 +447,7 @@
                         ["input.searchInput", {placeholder: "søg"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
-                    ["div.biblogo.pageHeading.w6", "Kardemommeby Bibliotek"],
+                    ["div.biblogo.pageHeading.w6", "Demo Bibliotek"],
                     ["div.patronWidget.w4.line", patronWidgetContent()],
                     ["div.openingTime.w2.line", "Åbningstider"],
                     ["div.largeWidget.newsWidget.w6", 
@@ -615,8 +620,34 @@
     // TODO: autoscrolling-infinite-list
 
     // Control {{{1
-    // Test {{{1
-    document.body.onload = function() {
-        transition(frontPage());
+    var urlTable = {
+        "": frontPage,
+        home: frontPage,
+        search: resultsPage,
+        patron: patronPage
     };
+    function go(name) {
+        if(false && window.history && history.pushState) {
+            name = "/" + name; 
+            history.pushState(name, name, name);
+            goCurrent();
+        } else {
+            location.hash = name;
+        }
+    }
+    function goCurrent() {
+        var path = urlUnescape((location.hash || location.pathname).slice(1));
+        var splitPos = path.indexOf("/");
+        if(splitPos === -1) {
+            splitPos = path.length;
+        }
+        var pageName = path.slice(0, splitPos);
+        var pageArg = path.slice(splitPos + 1);
+        console.log(path, "heRE", pageName, pageArg, path);
+        transition(jmlToDom(urlTable[pageName](pageArg)));
+    }
+    window.onpopstate = goCurrent;
+    window.onhashchange = goCurrent;
+    document.body.onload = goCurrent;
+    // Test {{{1
 })();
