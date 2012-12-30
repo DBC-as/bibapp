@@ -354,9 +354,9 @@
             }),
             searchButton: css({
                 height: unit, width: unit,
-
             }).on("click mousedown touch", function() {
-                go("search/sample search string");
+                var query = document.getElementsByClassName("searchInput")[0].value || "sample search string";
+                go("search/" + query);
             }),
             searchResult: css({
                 marginTop: margin,
@@ -444,7 +444,7 @@
         return ["div.page.frontPage",  //{{{
                 ["div.header", 
                     ["div.searchLine.w5.line", 
-                        ["input.searchInput", {placeholder: "søg"}]],
+                        ["input.searchInput", {placeholder: "søg", type: "search"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
                     ["div.biblogo.pageHeading.w6", "Demo Bibliotek"],
@@ -472,7 +472,7 @@
                 ["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["div.searchLine.w4.line", 
-                        ["input.searchInput", {value: query}]],
+                        ["input.searchInput", {value: query, type: "search"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
     } //}}}
@@ -566,6 +566,7 @@
     }
     var transitioning = false;
     function transition(page) {
+        window.scrollTo(0,0);
         if(!view) {
             initView(page);
             return;
@@ -605,9 +606,6 @@
             view.current.style.left = 0;
         }, 0);
         window.setTimeout(function() {
-            console.log(document.body.childNodes.length);
-            console.log(document.body.childNodes[0]);
-            console.log(document.body.childNodes[1]);
             while(document.body.childNodes.length > 1) {
                 document.body.removeChild(document.body.childNodes[0]);
             }
@@ -643,7 +641,6 @@
         }
         var pageName = path.slice(0, splitPos);
         var pageArg = path.slice(splitPos + 1);
-        console.log(path, "heRE", pageName, pageArg, path);
         transition(jmlToDom(urlTable[pageName](pageArg)));
     }
     window.onpopstate = goCurrent;
