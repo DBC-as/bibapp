@@ -650,7 +650,7 @@
         document.body.onload = goCurrent;
     }
     // Server {{{1
-    if(isServer) {
+    function startServer() {
         var fs = require("fs");
         var express = require("express");
         var app = express();
@@ -687,13 +687,102 @@
         var port = 8888;
         server.listen(port);
         console.log("started server on", port);
+    }
+    // Test {{{1
+    function TestSuite(name, doneFn) {
+        this.name = name;
+        this.suites = 1;
+        this.errCount = 0;
+        if(doneFn) {
+            this.doneFn = doneFn;
+        }
+    }
+    TestSuite.prototype.fail = function(expr, desc) {
+        ++this.errCount;
+        console.log("Fail in " + this.name + ": " + desc);
+    };
+    TestSuite.prototype.assert = function(expr, desc) {
+        if(!expr) {
+            ++this.errCount;
+            console.log("Assert in " + this.name + ": " + desc);
+        }
+    };
+    TestSuite.prototype.done = function() {
+        this.suites -= 1;
+        this._cleanup();
+    };
+    TestSuite.prototype.suite = function(name) {
+        var result = new TestSuite(this.name + "#" + name);
+        result.parent = this;
+        this.suites += 1;
+        return result;
+    };
+    TestSuite.prototype._cleanup = function() {
+        if(this.suites === 0) {
+            if(this.doneFn) {
+                this.doneFn(this.errCount);
+            }
+            if(this.parent) {
+                this.parent.errCount += this.errCount;
+                this.parent.suites -= 1;
+                this.parent._cleanup();
+            }
+        }
+    };
+    
+    /** testfunction running on clientside */
+    function testClient(test) {
+        test.done();
+    }
+    if(isClient) {
+        window.testClient = testClient;
+    }
+
+    /** test executer running on server */
+    function testServer(test) {
+        test.done();
+    }
+    /** test using zombie */
+    function testZombie(test) {
+        var Browser = require("zombie");
+        var browser = new Browser();
+        browser
+            .visit("http://localhost:8888/", {debug: true})
+            .then(function() {
+                test.assert(browser.errors.length === 0, "errors from load in client");
+                browser.window.testClient(test);
+            }).fail(function() {
+                test.fail("zombie load error");
+                test.done();
+            });
+    }
+    function runTests() {
+        var Browser = require("zombie");
+        var test = new TestSuite("BibApp", process.exit);
+
+        testServer(test.suite("server"));
+
+        // start the client-test via zombie
+        var clientSuite = test.suite("client");
+        var browser = new Browser();
+        browser
+            .visit("http://localhost:8888/", {debug: true})
+            .then(function() {
+                browser.window.testClient(clientSuite);
+            }).fail(function() {
+                clientSuite.fail("could not start client-test");
+                test.done();
+            });
+
+        testZombie(test.suite("ui"));
+        
+        test.done();
+    }
+    // Main {{{1 
+    if(isServer) {
+        startServer();
         if(process.argv[2] === "test") {
             runTests();
         }
-    }
-    // Test {{{1
-    /** test executer running on server */
-    function runTests() {
-        process.exit(0);
-    }
+    };
 })();
