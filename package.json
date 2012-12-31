@@ -10,7 +10,7 @@
     "socket.io": "*"
   },
   "scripts": {
-      "test": "node test/test.js"
+      "test": "node bibapp.js test"
   },
   "engines": {"node": "*"}
 }

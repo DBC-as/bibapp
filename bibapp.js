@@ -1,6 +1,8 @@
-// Copyright 2012 Rasmus Erik
+/*! Copyright 2012 Rasmus Erik */
 /*global document:true window:true*/
 (function() {
+    var isClient = !!(typeof window === "object" && window.document);
+    var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
     "use strict";
     // Util {{{1
     function urlUnescape(str) {
@@ -249,7 +251,6 @@
             return [];
         }
     } //}}}
-    window.data = data;
     // Views {{{1
     function genStyles(width, height) { //{{{
         var margin = (width / 40) & ~1;
@@ -625,7 +626,7 @@
         patron: patronPage
     };
     function go(name) {
-        if(false && window.history && history.pushState) {
+        if(window.history && history.pushState) {
             name = "/" + name; 
             history.pushState(name, name, name);
             goCurrent();
@@ -643,8 +644,56 @@
         var pageArg = path.slice(splitPos + 1);
         transition(jmlToDom(urlTable[pageName](pageArg)));
     }
-    window.onpopstate = goCurrent;
-    window.onhashchange = goCurrent;
-    document.body.onload = goCurrent;
+    if(isClient) {
+        window.onpopstate = goCurrent;
+        window.onhashchange = goCurrent;
+        document.body.onload = goCurrent;
+    }
+    // Server {{{1
+    if(isServer) {
+        var fs = require("fs");
+        var express = require("express");
+        var app = express();
+        var server = require("http").createServer(app)
+        var io = require("socket.io").listen(server);
+        
+        app.use("/depend", express.static(__dirname + "/depend"));
+        app.get("/bibapp.js", function(req, res) {
+            fs.readFile("bibapp.js", "utf8", function(err, data) {
+                if(err) throw err;
+                res.end(data);
+            });
+        });
+        app.get("*", function(req, res) {
+            page = "";
+            res.end("<!DOCTYPE html>" + jmlToStr(["html",
+                    ["head",
+                        ["title", "BibApp"],
+                        ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
+                        ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}]],
+                    ["body", 
+                        ["script", {src: "depend/socket.io.min.js"}, ""],
+                        ["script", "window.socket = io.connect('http://localhost:8888');"],
+                        ["script", {src: "/bibapp.js"}, ""],
+                    ]]));
+        });
+        
+        io.sockets.on("connection", function (socket) {
+            socket.on("bar", function (data) {
+                socket.emit("foo", {some: "obj"});
+            });
+        });
+        
+        var port = 8888;
+        server.listen(port);
+        console.log("started server on", port);
+        if(process.argv[2] === "test") {
+            runTests();
+        }
+    }
     // Test {{{1
+    /** test executer running on server */
+    function runTests() {
+        process.exit(0);
+    }
 })();
