@@ -1,15 +1,15 @@
 /*! Copyright 2012 Rasmus Erik */
-/*global document:true window:true*/
+/*global document:true window:true process:true location:true require:true __dirname:true console:true */
 (function() {
+    "use strict";
     var isClient = !!(typeof window === "object" && window.document);
     var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
-    "use strict";
     // Util {{{1
     function urlUnescape(str) {
         return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
             return String.fromCharCode(window.parseInt(code.slice(1), 16));
         });
-    };
+    }
     function values(obj) {//{{{
         var result = [];
         for(var key in obj) {
@@ -266,13 +266,13 @@
                 marginLeft: margin,
                 marginRight: 0,
                 width: unit * n + margin * (n-1),
-                display: "inline-block",
+                display: "inline-block"
                 //boxShadow: "1px 1px 4px rgba(0,0,0,1)"
             });
         } //}}}
         var result = { //{{{
             patronStatus: css({
-                textAlign: "center",
+                textAlign: "center"
             }),
             line: css({
                 marginTop: margin,
@@ -304,7 +304,7 @@
                 border: "1px outset",
                 borderRadius: margin,
                 textAlign: "center",
-                fontSize: unit * 0.65 - 2,
+                fontSize: unit * 0.65 - 2
             }),
             page: css({
                 verticalAlign: "middle",
@@ -315,7 +315,7 @@
                 padding: 0,
                 display: "inline-block",
                 color: "#110",
-                background: "#ffe",
+                background: "#ffe"
             }),
             header: css({
                 position: "fixed",
@@ -350,11 +350,11 @@
                 float: "right",
                 width: unit,
                 height: 0,
-                background: "red",
+                background: "red"
 
             }),
             searchButton: css({
-                height: unit, width: unit,
+                height: unit, width: unit
             }).on("click mousedown touch", function() {
                 var query = document.getElementsByClassName("searchInput")[0].value || "sample search string";
                 go("search/" + query);
@@ -362,8 +362,8 @@
             searchResult: css({
                 marginTop: margin,
                 height: 1.618 * unit,
-                overflow: "hidden",
                  //boxShadow: "1px 1px 4px rgba(0,0,0,1)",
+                overflow: "hidden"
             }),
             headerPadding: css({ height: unit+margin }),
             w1: wn(1), w2: wn(2), w3: wn(3),
@@ -372,8 +372,8 @@
                 width: "100%",
                 textAlign: "center",
                 marginLeft: 0,
-                marginTop: unit * .05,
-                height: unit * .65,
+                marginTop: unit * 0.05,
+                height: unit * 0.65,
                 fontSize: smallFont,
                 border: "none",
                 backgrund: "rgba(255,255,255,0.4)",
@@ -384,14 +384,14 @@
                 borderRadius: margin
             }),
             resultLine: css({
-                clear: "none",
+                clear: "none"
             }),
             pageHeading: css({
                 paddingTop: 0.2 * unit,
                 paddingBottom: 0,
                 marginTop: margin,
                 fontSize: 0.6 * unit,
-                height: 0.8 * unit,
+                height: 0.8 * unit
             })
         }; //}}}
         return result;
@@ -544,7 +544,7 @@
     // TODO: Calendar page (header: home-icon, overskrift)
     //}}}
     // Transitions {{{
-    var view = undefined;
+    var view;
     function initView(page) {
         window.view = view = {};
         view.width = Math.min(window.innerHeight, window.innerWidth);
@@ -562,7 +562,7 @@
             height: view.height,
             width: view.width,
             left: - view.width,
-            top: 0,
+            top: 0
         });
     }
     var transitioning = false;
@@ -586,7 +586,7 @@
             right: "0px",
             transition: transOn,
             mozTransition: transOn,
-            webkitTransition: transOn,
+            webkitTransition: transOn
         }).apply(view.current);
 
         view.current = jmlToDom(page);
@@ -599,11 +599,11 @@
             right: "0px",
             transition: transOn,
             mozTransition: transOn,
-            webkitTransition: transOn,
+            webkitTransition: transOn
         }).apply(view.current);
         document.body.appendChild(view.current);
         window.setTimeout(function() {
-            style.left = - view.width + "px"
+            style.left = - view.width + "px";
             view.current.style.left = 0;
         }, 0);
         window.setTimeout(function() {
@@ -626,9 +626,9 @@
         patron: patronPage
     };
     function go(name) {
-        if(window.history && history.pushState) {
+        if(window.history && window.history.pushState) {
             name = "/" + name; 
-            history.pushState(name, name, name);
+            window.history.pushState(name, name, name);
             goCurrent();
         } else {
             location.hash = name;
@@ -654,10 +654,10 @@
         var fs = require("fs");
         var express = require("express");
         var app = express();
-        var server = require("http").createServer(app)
+        var server = require("http").createServer(app);
         var io = require("socket.io").listen(server);
         
-        app.use("/depend", express.static(__dirname + "/depend"));
+        app.use("/depend", express["static"](__dirname + "/depend"));
         app.get("/bibapp.js", function(req, res) {
             fs.readFile("bibapp.js", "utf8", function(err, data) {
                 if(err) throw err;
@@ -665,7 +665,7 @@
             });
         });
         app.get("*", function(req, res) {
-            page = "";
+            var page = "";
             res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
                         ["title", "BibApp"],
@@ -674,7 +674,7 @@
                     ["body", 
                         ["script", {src: "depend/socket.io.min.js"}, ""],
                         ["script", "window.socket = io.connect('http://localhost:8888');"],
-                        ["script", {src: "/bibapp.js"}, ""],
+                        ["script", {src: "/bibapp.js"}, ""]
                     ]]));
         });
         
