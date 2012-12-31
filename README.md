@@ -1,3 +1,5 @@
+[![ci](https://secure.travis-ci.org/rasmuserik/bibapp.png)](http://travis-ci.org/rasmuserik/bibapp)
+
 # BibApp
 
 Mobile/html5 public library app.
