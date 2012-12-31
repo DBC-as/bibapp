@@ -672,7 +672,7 @@
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
                         ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}]],
                     ["body", 
-                        ["script", {src: "depend/socket.io.min.js"}, ""],
+                        ["script", {src: "/depend/socket.io.min.js"}, ""],
                         ["script", "window.socket = io.connect('http://localhost:8888');"],
                         ["script", {src: "/bibapp.js"}, ""]
                     ]]));
