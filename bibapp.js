@@ -1,5 +1,5 @@
 /*! Copyright 2012 Rasmus Erik */
-/*global document:true window:true process:true location:true require:true __dirname:true console:true */
+/*global document:true window:true process:true location:true require:true __dirname:true console:true parseInt:true */
 (function() {
     "use strict";
     var isClient = !!(typeof window === "object" && window.document);
@@ -7,7 +7,7 @@
     // Util {{{1
     function urlUnescape(str) {
         return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
-            return String.fromCharCode(window.parseInt(code.slice(1), 16));
+            return String.fromCharCode(parseInt(code.slice(1), 16));
         });
     }
     function values(obj) {//{{{
@@ -634,20 +634,24 @@
             location.hash = name;
         }
     }
-    function goCurrent() {
-        var path = urlUnescape((location.hash || location.pathname).slice(1));
+    function getJml(path) {
+        path = urlUnescape(path.slice(1));
         var splitPos = path.indexOf("/");
         if(splitPos === -1) {
             splitPos = path.length;
         }
         var pageName = path.slice(0, splitPos);
         var pageArg = path.slice(splitPos + 1);
-        transition(jmlToDom(urlTable[pageName](pageArg)));
+        return urlTable[pageName] && urlTable[pageName](pageArg);
+    }
+    function goCurrent() {
+        var path = location.hash || location.pathname;
+        transition(jmlToDom(getJml(path)));
     }
     if(isClient) {
         window.onpopstate = goCurrent;
         window.onhashchange = goCurrent;
-        document.body.onload = goCurrent;
+        document.onload = goCurrent;
     }
     // Server {{{1
     function startServer() {
@@ -670,11 +674,13 @@
                     ["head",
                         ["title", "BibApp"],
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
-                        ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}]],
-                    ["body", 
+                        ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}],
                         ["script", {src: "/depend/socket.io.min.js"}, ""],
                         ["script", "window.socket = io.connect('http://localhost:8888');"],
                         ["script", {src: "/bibapp.js"}, ""]
+                    ],
+                    ["body", 
+                        getJml(req.url)
                     ]]));
         });
         
