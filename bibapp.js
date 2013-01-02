@@ -11,9 +11,24 @@
     // client socket
     var io = isServer ? require('socket.io-client') : window.io;
     var socket = io.connect("http://" + host + ":" + port);
+    function arrayToSetObject(arr) { //{{{
+        var i;
+        var result = {};
+        for(i=0;i< arr.length; ++i) {
+            result[arr[i]] = true;
+        }
+        return result;
+    } //}}}
     var xmlEntities = { //{{{
+        amp: "&",
+        quot: "\"",
+        nbsp: "\xa0",
     }; //}}}
     function strToJml(str) { //{{{
+        var errors = [];
+        function JsonML_Error(str) {
+            errors.push(str);
+        }
         if(typeof(str) !== "string") {
             throw "parameter must be string"
         }
@@ -124,7 +139,7 @@
                     }
                     next_char();
                     var parent_tag = stack.pop();
-                    if(tag.length <= 2 && !isArray(tag[1]) && typeof(tag[1]) !== "string") {
+                    if(tag.length <= 2 && !Array.isArray(tag[1]) && typeof(tag[1]) !== "string") {
                         tag.push("");
                     }
                     parent_tag.push(tag);
@@ -136,6 +151,9 @@
             } else {
                 tag.push(read_until("<"));
             }
+        }
+        if(errors.length) {
+            console.log(errors);
         }
         return tag;
     } //}}}
@@ -823,7 +841,28 @@
         }
     } //}}}
     function bibEntry(id, callback) {
-        getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, callback);
+        var result = {};
+        getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, handleBibData);
+        function handleBibData(err, data) {
+            if(err) {
+                callback(err);
+            } else {
+                strToJml(data).forEach(extractData);
+                callback(undefined, result);
+            }
+        }
+        function extractData(data) {
+            if(Array.isArray(data)) {
+                var attr = data[1];
+                var classes = attr["class"] && arrayToSetObject(attr["class"].split(" ")) || {};
+                console.log(classes);
+                if(classes["ting-overview"]) {
+                    console.log(data);
+                }
+
+                data.slice(2).forEach(extractData);
+            }
+        }
     }
     //}}}
     // Serve data {{{
@@ -972,7 +1011,7 @@
                 if(err) {
                     throw err;
                 }
-                console.log(result);
+                //console.log(result);
                 setTimeout(process.exit, 100);
             });
         }
