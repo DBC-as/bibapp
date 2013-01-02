@@ -797,14 +797,11 @@
     // Server {{{1
     // Scraper {{{
     function getCacheOrUrl(id, callback) { //{{{
-        var crypto = require("crypto");
         var fs = require("fs");
         var request = require("request");
 
-        var hash = crypto.createHash("sha256");
-        hash.update(id);
-        var digest = hash.digest("hex");
-        fs.readFile("cache/" + digest, "utf8", function(err, data) {
+        var cacheName = id.replace(/[^a-zA-Z0-9]/g, "_");
+        fs.readFile("cache/" + cacheName, "utf8", function(err, data) {
             if(!err) {
                 callback(undefined, data);
             } else {
@@ -812,7 +809,7 @@
             }
         });
         function downloadAndCache() {
-            request("http://bibliotek.kk.dk/ting/object/" + id, function(err, res, data) {
+            request(id, function(err, res, data) {
                 if(err || res.statusCode !== 200) {
                     callback(err || res);
                 } else {
@@ -821,12 +818,12 @@
             });
         }
         function handleDownload(data) {
-            fs.writeFile("cache/" + digest, data);
+            fs.writeFile("cache/" + cacheName, data);
             callback(undefined, data);
         }
     } //}}}
     function bibEntry(id, callback) {
-        getCacheOrUrl(id, callback);
+        getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, callback);
     }
     //}}}
     // Serve data {{{
