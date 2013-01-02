@@ -654,13 +654,12 @@
         document.onload = goCurrent;
     }
     // Server {{{1
-    function startServer() {
-        var fs = require("fs");
+    var host = "localhost";
+    var port = 8888
+    function webServer(app) {
         var express = require("express");
-        var app = express();
-        var server = require("http").createServer(app);
-        var io = require("socket.io").listen(server);
-        
+        var fs = require("fs");
+
         app.use("/depend", express["static"](__dirname + "/depend"));
         app.get("/bibapp.js", function(req, res) {
             fs.readFile("bibapp.js", "utf8", function(err, data) {
@@ -676,21 +675,27 @@
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
                         ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}],
                         ["script", {src: "/depend/socket.io.min.js"}, ""],
-                        ["script", "window.socket = io.connect('http://localhost:8888');"],
+                        ["script", "window.socket = io.connect('http://" + host + ":" + port + "/');"],
                         ["script", {src: "/bibapp.js"}, ""]
                     ],
                     ["body", 
                         getJml(req.url)
                     ]]));
         });
-        
-        io.sockets.on("connection", function (socket) {
+    }
+    function socketOnConnection(socket) {
             socket.on("bar", function (data) {
                 socket.emit("foo", {some: "obj"});
             });
-        });
-        
-        var port = 8888;
+    }
+    function startServer() {
+        var express = require("express");
+        var app = express();
+        var server = require("http").createServer(app);
+        var io = require("socket.io").listen(server);
+        webServer(app);
+        io.sockets.on("connection", socketOnConnection);
+
         server.listen(port);
         console.log("started server on", port);
     }
