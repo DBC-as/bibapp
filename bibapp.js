@@ -27,6 +27,15 @@
         quot: "\"",
         nbsp: "\xa0",
     }; //}}}
+    function jmlFilterWs(jml) {
+        if(typeof jml === "string") {
+            return jml.trim();
+        } else if(Array.isArray(jml)) {
+            return jml.map(jmlFilterWs).filter(function(s) { return s !== ""; });
+        } else {
+            return jml;
+        }
+    }
     function strToJml(str) { //{{{
         var errors = [];
         function JsonML_Error(str) {
@@ -911,6 +920,19 @@
             }
         }//}}}
     } //}}}
+    function bibSearch(query, page, callback) {
+        getCacheOrUrl("http://bibliotek.kk.dk/ting/search/js?page=" + (page + 1) + "&query=" + query, handleSearchData);
+        function handleSearchData(err, data) {
+            if(err) {
+                callback(err);
+            } else {
+                var json = JSON.parse(data);
+                json.result_html = jmlFilterWs(strToJml(json.result_html));
+                console.log(json.result_html[0]);
+                callback(undefined, json);
+            }
+        }
+    }
     //}}}
     // Serve data {{{
     function webServer(app) {
@@ -1054,7 +1076,8 @@
         if(command === "test") {
             runTests();
         } else if(command === "fetch") {
-            bibEntry("710100:28958129", function(err, result) {
+            //bibEntry("710100:28958129", function(err, result) {
+            bibSearch("coelho", 0, function(err, result) {
             //bibEntry("710100:43739506", function(err, result) {
                 if(err) {
                     throw err;
