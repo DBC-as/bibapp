@@ -4,12 +4,18 @@
     "use strict";
     var isClient = !!(typeof window === "object" && window.document);
     var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
+    // Config {{{1
+    var host = "localhost";
+    var port = 8888
     // Util {{{1
-    function urlUnescape(str) {
+    // client socket
+    var io = isServer ? require('socket.io-client') : window.io;
+    var socket = io.connect("http://" + host + ":" + port);
+    function urlUnescape(str) { //{{{
         return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
             return String.fromCharCode(parseInt(code.slice(1), 16));
         });
-    }
+    } //}}}
     function values(obj) {//{{{
         var result = [];
         for(var key in obj) {
@@ -635,6 +641,7 @@
         }
     }
     function getJml(path) {
+        socket.emit("status", {"getJml": path});
         path = urlUnescape(path.slice(1));
         var splitPos = path.indexOf("/");
         if(splitPos === -1) {
@@ -651,11 +658,9 @@
     if(isClient) {
         window.onpopstate = goCurrent;
         window.onhashchange = goCurrent;
-        document.onload = goCurrent;
+        window.main = goCurrent;
     }
     // Server {{{1
-    var host = "localhost";
-    var port = 8888
     function webServer(app) {
         var express = require("express");
         var fs = require("fs");
@@ -675,17 +680,16 @@
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
                         ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}],
                         ["script", {src: "/depend/socket.io.min.js"}, ""],
-                        ["script", "window.socket = io.connect('http://" + host + ":" + port + "/');"],
                         ["script", {src: "/bibapp.js"}, ""]
                     ],
-                    ["body", 
+                    ["body", {onload: "window.main()"},
                         getJml(req.url)
                     ]]));
         });
     }
     function socketOnConnection(socket) {
-            socket.on("bar", function (data) {
-                socket.emit("foo", {some: "obj"});
+            socket.on("status", function(data) {
+                console.log(socket.id, data);
             });
     }
     function startServer() {

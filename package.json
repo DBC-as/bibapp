@@ -8,6 +8,7 @@
     "zombie": "*",
     "express": "*",
     "closure-compiler": "*",
+    "socket.io-client": "*",
     "socket.io": "*"
   },
   "scripts": {
