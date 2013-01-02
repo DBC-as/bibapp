@@ -167,6 +167,22 @@
         }
         return tag;
     } //}}}
+    function jmlTrimmedTexts(data) {//{{{
+        if(typeof data === "string") {
+            return data.trim();
+        } else if(Array.isArray(data)) {
+            return data.slice(2).map(jmlTrimmedTexts).filter(function(a) { return a !== ""; }).reduce(function(a,b) { 
+                if(Array.isArray(b)) { 
+                    return a.concat(b);
+                } else {
+                    a.push(b); 
+                    return a; 
+                }
+            }, []);
+        } else {
+            return "";
+        }
+    }//}}}
         function urlUnescape(str) { //{{{
             return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
                 return String.fromCharCode(parseInt(code.slice(1), 16));
@@ -837,10 +853,13 @@
             }
         });
         function downloadAndCache() {
+            console.log("http-get", id);
             request(id, function(err, res, data) {
                 if(err || res.statusCode !== 200) {
+                    console.log("got error", id);
                     callback(err || res);
                 } else {
+                    console.log("got it", id);
                     handleDownload(data);
                 }
             });
@@ -854,35 +873,21 @@
         function warn(msg) {
             console.log.apply(null, arguments);
         }
-        var result = {id: id};
         getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, handleBibData);
+
         function handleBibData(err, data) { //{{{
             if(err) {
                 callback(err);
             } else {
-                strToJml(data).forEach(extractData);
+                var result = parseBibData(strToJml(data));
+                result.id = id;
                 callback(undefined, result);
             }
         } //}}}
+    function parseBibData(data) { //{{{
         function set(name, val) { //{{{
             if(!result[name]) { result[name] = []; }
             if(val) { result[name].push(val); }
-        }//}}}
-        function getText(data) {//{{{
-            if(typeof data === "string") {
-                return data.trim();
-            } else if(Array.isArray(data)) {
-                return data.slice(2).map(getText).filter(function(a) { return a !== ""; }).reduce(function(a,b) { 
-                    if(Array.isArray(b)) { 
-                        return a.concat(b);
-                    } else {
-                        a.push(b); 
-                        return a; 
-                    }
-                }, []);
-            } else {
-                return "";
-            }
         }//}}}
         function extractData(data) { //{{{
             function len3() { if(data.length !== 3) { warn("unexpected length", data); } }
@@ -909,7 +914,7 @@
                             }
                         } else {
                             var dkProp = content[2][2];
-                            var val = getText(content[3]);
+                            var val = jmlTrimmedTexts(content[3]);
                             if(typeof dkProp === "string") {
                                 result[dkProp] = (result[dkProp] || []).concat(val);
                             }
@@ -919,20 +924,44 @@
                 data.slice(2).forEach(extractData);
             }
         }//}}}
+        var result = {};
+        data.forEach(extractData);
+        return result;
     } //}}}
-    function bibSearch(query, page, callback) {
+    } //}}}
+    function bibSearch(query, page, callback) { //{{{
         getCacheOrUrl("http://bibliotek.kk.dk/ting/search/js?page=" + (page + 1) + "&query=" + query, handleSearchData);
         function handleSearchData(err, data) {
             if(err) {
                 callback(err);
             } else {
                 var json = JSON.parse(data);
-                json.result_html = jmlFilterWs(strToJml(json.result_html));
-                console.log(json.result_html[0]);
-                callback(undefined, json);
+                var results = jmlFilterWs(strToJml(json.result_html)).map(function(entry) {
+                    var result = {};
+                    var url = entry[2][2][1]["href"];
+                    result.id = url.replace(/.*\//, "").replace("%3A", ":");
+                    result.isCollection = (url.indexOf("collection") !== -1);
+                    result.coverUrl = entry[2][2][2][1]["src"];
+                    function bibVisitor(elem) {
+                        if(Array.isArray(elem)) {
+                            var cls = elem[1]["class"] || "";
+                            if(cls === "publication_date") { result.publication_date = elem[3] ? elem[3][2] : elem[2]; };
+                            if(cls.slice(0, 13) === "ting-subjects" && typeof elem[2] === "string") { 
+                                result.subject = (result.subject||[]).concat([elem[2]]);
+                            }
+                            if(cls === "creator" && elem[2] === "Af") { result.creator = elem[3][2] };
+                            if(cls === "abstract") { result["abstract"] = elem[2] };
+                            if(elem[0] === "h3") { result.title = elem[2][2]; }
+                            elem.slice(2).forEach(bibVisitor);
+                        }
+                    }
+                    bibVisitor(entry);
+                    return result;
+                });
+                callback(undefined, results);
             }
         }
-    }
+    } //}}}
     //}}}
     // Serve data {{{
     function webServer(app) {
@@ -1077,8 +1106,11 @@
             runTests();
         } else if(command === "fetch") {
             //bibEntry("710100:28958129", function(err, result) {
-            bibSearch("coelho", 0, function(err, result) {
-            //bibEntry("710100:43739506", function(err, result) {
+            //bibSearch("coelho", 6, function(err, result) {
+            //bibSearch("jensen", 0, function(err, result) {
+            bibEntry("710100:43739506", function(err, result) {
+            //bibEntry("710100:43731920", function(err, result) {
+            //bibSearch("coelho", 10, function(err, result) {
                 if(err) {
                     throw err;
                 }
