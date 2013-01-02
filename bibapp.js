@@ -11,11 +11,139 @@
     // client socket
     var io = isServer ? require('socket.io-client') : window.io;
     var socket = io.connect("http://" + host + ":" + port);
-    function urlUnescape(str) { //{{{
-        return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
-            return String.fromCharCode(parseInt(code.slice(1), 16));
-        });
+    var xmlEntities = { //{{{
+    }; //}}}
+    function strToJml(str) { //{{{
+        if(typeof(str) !== "string") {
+            throw "parameter must be string"
+        }
+    
+        /** white space definition */
+        var whitespace = " \n\r\t";
+        /** the current char in the string that is being parsed */
+        var c = str[0];
+        /** The position in the string */
+        var pos = 0;
+        /** Stack for handling nested tags */
+        var stack = [];
+        /** Current tag being parsed */
+        var tag = [];
+        /** read the next char from the string */
+        function next_char() { c = ++pos < str.length ? str[pos] : undefined; }
+        /** check if the current char is one of those in the string parameter */
+        function is_a(str) { return str.indexOf(c) !== -1; }
+        /** return the string from the current position to right before the first
+         * occurence of any of symb. Translate escaped xml entities to their value
+         * on the fly.
+         */
+        function read_until(symb) {
+            var result = "";
+            while(c && !is_a(symb)) {
+                if(c === '&') {
+                    next_char();
+                    var entity = read_until(';');
+                    if(entity[0] === '#') {
+                        if(entity[1] === 'x') {
+                            c = String.fromCharCode(parseInt(entity.slice(2), 16));
+                        } else {
+                            c = String.fromCharCode(parseInt(entity.slice(1), 10));
+                        }
+                    } else {
+                        c = xmlEntities[entity];
+                        if(!c) {
+                            JsonML_Error("error: unrecognisable xml entity: " + entity);
+                        }
+                    }
+                }
+                result += c;
+                next_char();
+            }
+            return result
+        }
+    
+        // The actual parsing
+        while(is_a(whitespace)) { next_char(); }
+        while(c) {
+            if(is_a("<")) {
+                next_char();
+    
+                // `<?xml ... >`, `<!-- -->` or similar - skip these
+                if(is_a("?!")) {
+                    if(str.slice(pos, pos+3) === "!--") {
+                        pos += 3;
+                        while(pos <= str.length && str.slice(pos, pos+2) !== "--") {
+                            ++pos;
+                        }
+                    }
+                    read_until('>');
+                    next_char();
+    
+                // `<sometag ...>` - handle begin tag
+                } else if(!is_a("/")) {
+                    // read tag name
+                    var newtag = [read_until(whitespace+">/")];
+    
+                    // read attributes
+                    var attributes = {};
+                    var has_attributes = 0;
+                    while(c && is_a(whitespace)) { next_char(); }
+                    while(c && !is_a(">/")) {
+                        has_attributes = 1;
+                        var attr = read_until(whitespace + "=>");
+                        if(c === "=") {
+                            next_char();
+                            var value_terminator = whitespace+">/";
+                            if(is_a('"\'')) { value_terminator = c; next_char(); }
+                            attributes[attr] = read_until(value_terminator);
+                            if(is_a('"\'')) { next_char(); }
+                        } else {
+                            JsonML_Error("something not attribute in tag");
+                        }
+                        while(c && is_a(whitespace)) { next_char(); }
+                    }
+                    if(has_attributes) { newtag.push(attributes); }
+    
+                    // end of tag, is it `<.../>` or `<...>`
+                    if(is_a("/")) {
+                        next_char();
+                        if(!is_a(">")) {
+                            JsonML_Error('expected ">" after "/" within tag');
+                        }
+                        tag.push(newtag);
+                    } else {
+                        stack.push(tag);
+                        tag = newtag;
+                    }
+                    next_char();
+    
+                // `</something>` - handle end tag
+                } else {
+                    next_char();
+                    if(read_until(">") !== tag[0]) {
+                        JsonML_Error("end tag not matching: " + tag[0]);
+                    }
+                    next_char();
+                    var parent_tag = stack.pop();
+                    if(tag.length <= 2 && !isArray(tag[1]) && typeof(tag[1]) !== "string") {
+                        tag.push("");
+                    }
+                    parent_tag.push(tag);
+                    tag = parent_tag;
+    
+                }
+    
+            // actual content / data between tags
+            } else {
+                tag.push(read_until("<"));
+            }
+        }
+        return tag;
     } //}}}
+        function urlUnescape(str) { //{{{
+            return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
+                return String.fromCharCode(parseInt(code.slice(1), 16));
+            });
+        } //}}}
     function values(obj) {//{{{
         var result = [];
         for(var key in obj) {
@@ -185,17 +313,23 @@
             calendar: [sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent],
             news: [sampleNews, sampleNews, sampleNews, sampleNews, sampleNews, sampleNews]}; //}}}
         var cache = { //{{{
-            materials: {
+           materials: {
                 "830318:48781321": {
                     lastSync: 1356706097976,
                     id: "830318:48781321",
                     title: "Samlede Eventyr",
                     creator: "H. C. Andersen",
+                    dk5: "sk",
+                    year: "2001",
                     type: "book",
                     thumbUrl: "http://bibliotek.example.com/foo/bar...",
                     description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
-                    topic: ["dk5:89.13", "eventyr"],
-                    isbn: "891384328401",
+                    topic: ["dk5:sk", "dk5Text:Skønlitteratur", "fiktion"],
+                    isbn: "87-412-4031-6",
+                    sprog: "Dansk",
+                    edition: "Jubilæumsudgaven, 2. udgave, 7. oplag",
+                    publisher: "Hans Reitzel",
+                    "længde": "1029 sider ",
                     status: "available"
                 }},
             searches: {
@@ -661,6 +795,41 @@
         window.main = goCurrent;
     }
     // Server {{{1
+    // Scraper {{{
+    function getCacheOrUrl(id, callback) { //{{{
+        var crypto = require("crypto");
+        var fs = require("fs");
+        var request = require("request");
+
+        var hash = crypto.createHash("sha256");
+        hash.update(id);
+        var digest = hash.digest("hex");
+        fs.readFile("cache/" + digest, "utf8", function(err, data) {
+            if(!err) {
+                callback(undefined, data);
+            } else {
+                downloadAndCache();
+            }
+        });
+        function downloadAndCache() {
+            request("http://bibliotek.kk.dk/ting/object/" + id, function(err, res, data) {
+                if(err || res.statusCode !== 200) {
+                    callback(err || res);
+                } else {
+                    handleDownload(data);
+                }
+            });
+        }
+        function handleDownload(data) {
+            fs.writeFile("cache/" + digest, data);
+            callback(undefined, data);
+        }
+    } //}}}
+    function bibEntry(id, callback) {
+        getCacheOrUrl(id, callback);
+    }
+    //}}}
+    // Serve data {{{
     function webServer(app) {
         var express = require("express");
         var fs = require("fs");
@@ -703,6 +872,7 @@
         server.listen(port);
         console.log("started server on", port);
     }
+    //}}}
     // Test {{{1
     // TestSuite class {{{
     function TestSuite(name, doneFn) { //{{{
@@ -797,8 +967,17 @@
     // Main {{{1 
     if(isServer) {
         startServer();
-        if(process.argv[2] === "test") {
+        var command = process.argv[2];
+        if(command === "test") {
             runTests();
+        } else if(command === "fetch") {
+            bibEntry("710100:43739506", function(err, result) {
+                if(err) {
+                    throw err;
+                }
+                console.log(result);
+                setTimeout(process.exit, 100);
+            });
         }
     }
 })();

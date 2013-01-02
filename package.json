@@ -5,6 +5,7 @@
   "homepage": "http://github.com/rasmuserik/bibapp",
   "description": "Hybrid mobile/html5 public library app",
   "dependencies": {
+    "request": "*",
     "zombie": "*",
     "express": "*",
     "closure-compiler": "*",
