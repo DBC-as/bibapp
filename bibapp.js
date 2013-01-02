@@ -6,7 +6,7 @@
     var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
     // Config {{{1
     var host = "localhost";
-    var port = 8888
+    var port = 8888;
     // Util {{{1
     // client socket
     var io = isServer ? require('socket.io-client') : window.io;
@@ -800,5 +800,5 @@
         if(process.argv[2] === "test") {
             runTests();
         }
-    };
+    }
 })();
