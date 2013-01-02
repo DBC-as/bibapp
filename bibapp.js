@@ -19,6 +19,9 @@
         }
         return result;
     } //}}}
+    function notEmpty(obj) {
+        return Object.keys(obj).length !== 0;
+    }
     var xmlEntities = { //{{{
         amp: "&",
         quot: "\"",
@@ -100,10 +103,8 @@
     
                     // read attributes
                     var attributes = {};
-                    var has_attributes = 0;
                     while(c && is_a(whitespace)) { next_char(); }
                     while(c && !is_a(">/")) {
-                        has_attributes = 1;
                         var attr = read_until(whitespace + "=>");
                         if(c === "=") {
                             next_char();
@@ -116,7 +117,7 @@
                         }
                         while(c && is_a(whitespace)) { next_char(); }
                     }
-                    if(has_attributes) { newtag.push(attributes); }
+                    newtag.push(attributes);
     
                     // end of tag, is it `<.../>` or `<...>`
                     if(is_a("/")) {
@@ -840,30 +841,76 @@
             callback(undefined, data);
         }
     } //}}}
-    function bibEntry(id, callback) {
-        var result = {};
+    function bibEntry(id, callback) { //{{{
+        function warn(msg) {
+            console.log.apply(null, arguments);
+        }
+        var result = {id: id};
         getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, handleBibData);
-        function handleBibData(err, data) {
+        function handleBibData(err, data) { //{{{
             if(err) {
                 callback(err);
             } else {
                 strToJml(data).forEach(extractData);
                 callback(undefined, result);
             }
-        }
-        function extractData(data) {
+        } //}}}
+        function set(name, val) { //{{{
+            if(!result[name]) { result[name] = []; }
+            if(val) { result[name].push(val); }
+        }//}}}
+        function getText(data) {//{{{
+            if(typeof data === "string") {
+                return data.trim();
+            } else if(Array.isArray(data)) {
+                return data.slice(2).map(getText).filter(function(a) { return a !== ""; }).reduce(function(a,b) { 
+                    if(Array.isArray(b)) { 
+                        return a.concat(b);
+                    } else {
+                        a.push(b); 
+                        return a; 
+                    }
+                }, []);
+            } else {
+                return "";
+            }
+        }//}}}
+        function extractData(data) { //{{{
+            function len3() { if(data.length !== 3) { warn("unexpected length", data); } }
             if(Array.isArray(data)) {
                 var attr = data[1];
                 var classes = attr["class"] && arrayToSetObject(attr["class"].split(" ")) || {};
-                console.log(classes);
-                if(classes["ting-overview"]) {
-                    console.log(data);
+                if(data[0] === "h2") { len3(); set("title", data[2]); }
+                if(classes["abstract"]) { len3(); set("abstract", data[2]); }
+                if(classes["date"]) { len3(); set("date", data[2]); }
+                if(classes["left-column"]) {
+                    if(data[3][1]["class"] !== "picture") { warn("expecting picture", data); };
+                    set("coverUrl", data[3][3][1]["src"]);
                 }
-
+                attr["class"] && attr["class"].split(" ").forEach(function(cls) {
+                    if(cls.slice(0, 5) === "ting-") {
+                        if(cls === "ting-autocomplete") {
+                            return;
+                        }
+                        var content = data[2];
+                        var propName = cls.slice(5);
+                        if(typeof content === "string") {
+                            if(content.trim()) {
+                                set(propName, content);
+                            }
+                        } else {
+                            var dkProp = content[2][2];
+                            var val = getText(content[3]);
+                            if(typeof dkProp === "string") {
+                                result[dkProp] = (result[dkProp] || []).concat(val);
+                            }
+                        }
+                    }
+                });
                 data.slice(2).forEach(extractData);
             }
-        }
-    }
+        }//}}}
+    } //}}}
     //}}}
     // Serve data {{{
     function webServer(app) {
@@ -1007,11 +1054,12 @@
         if(command === "test") {
             runTests();
         } else if(command === "fetch") {
-            bibEntry("710100:43739506", function(err, result) {
+            bibEntry("710100:28958129", function(err, result) {
+            //bibEntry("710100:43739506", function(err, result) {
                 if(err) {
                     throw err;
                 }
-                //console.log(result);
+                console.log(result);
                 setTimeout(process.exit, 100);
             });
         }
