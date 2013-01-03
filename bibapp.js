@@ -679,9 +679,17 @@
                     ["div.largeWidget.calendarWidget.w6", 
                         ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]]});  //}}}
     } //}}}
-    function resultsPage(arg) { //{{{
-        var query = arg.path.replace(/[^\/]*\//, "");
-        console.log("query:", query);
+    function resultsPage(opt) { //{{{
+        var query = opt.path;
+        function deliverResultsPage(results) {
+            opt.callback({jml: ["div.page.searchResults", //{{{
+                ["div.header", 
+                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
+                    ["div.searchLine.w4.line", 
+                        ["input.searchInput", {value: query, type: "search"}]],
+                    ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
+                ["div.content", {id: "results:" + query}].concat(results)]}); //}}}
+        }
         if(isClient) {
             var styles = genStyles(window.innerWidth, window.innerHeight);
             rpcCall("BibAppSearch", {query: query, page: 0}, function(err, data) {
@@ -710,17 +718,14 @@
                 });
             });
         }
-        // TODO: facets
-        arg.callback({jml: ["div.page.searchResults", //{{{
-                ["div.header", 
-                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
-                    ["div.searchLine.w4.line", 
-                        ["input.searchInput", {value: query, type: "search"}]],
-                    ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
-                ["div.content", {id: "results:" + query}]]}); //}}}
+        if(isClient) {
+            deliverResultsPage([]);
+        } else {
+            deliverResultsPage([]);
+        }
     } //}}}
-    function loginPage(arg) {//{{{
-        arg.callback({jml:["div.page.login", 
+    function loginPage(opt) {//{{{
+        opt.callback({jml:["div.page.login", 
                 ["span.w6.spacing.largeWidget", ""],
                 ["div.w2.right", "Brugerid:"],
                 ["input.w4.line", ""],
@@ -731,7 +736,7 @@
                 ["div.w2.line.button", "Log ind"],
                 ["span.w6.spacing.largeWidget", ""]]}); 
     }//}}}
-    function patronPage(arg) { //{{{
+    function patronPage(opt) { //{{{
         var content = ["div.content"];
 
         function arrivedEntry(entry) {
@@ -774,7 +779,7 @@
             content = content.concat(reservations.map(reservationEntry));
         }
 
-        arg.callback({jml:["div.page.patronInfo", 
+        opt.callback({jml:["div.page.patronInfo", 
                 ["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
@@ -901,40 +906,34 @@
      * - callback: function of {jml: ..., cls: ...}
      */
     function jmlPage(opt) {
-        var path = urlUnescape(opt.path.slice(1));
+        var path = urlUnescape(opt.path);
         var splitPos = path.indexOf("/");
         if(splitPos === -1) {
             splitPos = path.length;
         }
         var pageName = path.slice(0, splitPos);
         var pageArg = path.slice(splitPos + 1);
-        var param = {
-            staticPage: false,
-            path: path,
-            callback: opt.callback
-        };
-        return urlTable[pageName] && urlTable[pageName](param);
-    }
-    var switchInProgress = false;
-    function goCurrent() {
-        if(switchInProgress) {
-            return;
+        var fn = urlTable[pageName];
+        if(fn) {
+            opt.path = pageArg;
+        } else {
+            fn = urlTable["default"];
         }
-        var path = location.hash || location.pathname;
-        function renderPage(data) {
-            transition(jmlToDom(data.jml));
-        }
-        jmlPage({path: path, callback: renderPage});
-        switchInProgress = true;
-        setTimeout(function() {
-            switchInProgress = false;
-        }, 100);
+        fn(opt);
     }
-    if(isClient) {
+    if(isClient) { //{{{
+        var switchInProgress = false;
         window.onpopstate = goCurrent;
         window.onhashchange = goCurrent;
         window.main = goCurrent;
     }
+    function goCurrent() {
+        if(switchInProgress) { return; }
+        jmlPage({path: (location.hash || location.pathname).slice(1),
+            callback: function(data) { transition(jmlToDom(data.jml)); }});
+        switchInProgress = true;
+        setTimeout(function() { switchInProgress = false; }, 100);
+    } //}}}
     // Server {{{1
     // Scraper {{{
     function getCacheOrUrl(id, callback) { //{{{
@@ -1091,7 +1090,7 @@
             });
         });
         app.get("*", function(req, res) {
-            jmlPage({path: req.url, staticPage: true, callback: function(data) {
+            jmlPage({path: req.url.slice(1), staticPage: true, callback: function(data) {
                 var page = "";
                 res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
