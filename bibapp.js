@@ -699,15 +699,15 @@
             var result = data.map(function(entry) {
                 return ["div", 
                     ["a.searchResult.w1.applink",
-                        {href: "/demo/bibentry/" + entry.id},
+                        {href: "/bibentry/" + entry.id},
                         ["img.resultImg", {src: entry.coverUrl}]],
                     ["a.div.searchResult.w4.applink",
-                        {href: "/demo/bibentry/" + entry.id},
+                        {href: "/bibentry/" + entry.id},
                         ["div.resultTitle.resultLine", entry.title || "untitled"],
                         ["div.resultCreator.resultLine", entry.creator || "unknown origin"],
-                        ["div.resultDescription.resultLine", entry["abstract"] || entry.subject.join(" ") || ""]],
+                        ["div.resultDescription.resultLine", entry["abstract"] || (entry.subject || []).join(" ")]],
                     ["a.orderButton.w1.line.applink", 
-                        {href: ("/demo/order/" + entry.id)}, 
+                        {href: ("/order/" + entry.id)}, 
                         ["span.icon.icon-shopping-cart", ""]]];
             });
             if(isClient) {
@@ -884,7 +884,6 @@
     // page:
     // fn: (clientInfo, desired page, 
     // data:
-    //     staticPage: true/false
     //     pageName: string
     //     width: int,
     //     height: int,
@@ -903,7 +902,6 @@
     /**
      * Opt object:
      * - path: path without single leading
-     * - staticPage: true/false
      * - width/height: integers
      * - callback: function of {jml: ..., cls: ...}
      */
@@ -1040,7 +1038,6 @@
                     result.id = url.replace(/.*\//, "").replace("%3A", ":");
                     result.isCollection = (url.indexOf("collection") !== -1);
                     result.coverUrl = entry[2][2][2][1]["src"];
-                    console.log(entry[2][2]);
                     function bibVisitor(elem) {
                         if(Array.isArray(elem)) {
                             var cls = elem[1]["class"] || "";
@@ -1092,7 +1089,7 @@
             });
         });
         app.get("*", function(req, res) {
-            jmlPage({path: req.url.slice(1), staticPage: true, callback: function(data) {
+            jmlPage({path: req.url.slice(1), callback: function(data) {
                 var page = "";
                 res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
@@ -1221,22 +1218,6 @@
         var command = process.argv[2];
         if(command === "test") {
             runTests();
-        } else if(command === "fetch") {
-            rpcCall("hello", undefined, function(err, data) {
-                console.log(err,data);
-            });
-            //bibEntry("710100:28958129", function(err, result) {
-            //bibSearch("coelho", 6, function(err, result) {
-            //bibSearch("jensen", 0, function(err, result) {
-            bibEntry("710100:43739506", function(err, result) {
-            //bibEntry("710100:43731920", function(err, result) {
-            //bibSearch("coelho", 10, function(err, result) {
-                if(err) {
-                    throw err;
-                }
-                console.log(result);
-                setTimeout(process.exit, 100);
-            });
         }
     }
 })();
