@@ -680,7 +680,7 @@
                         ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]]});  //}}}
     } //}}}
     function resultsPage(arg) { //{{{
-        var query = arg.pageName.replace(/[^\/]*\//, "");
+        var query = arg.path.replace(/[^\/]*\//, "");
         console.log("query:", query);
         if(isClient) {
             var styles = genStyles(window.innerWidth, window.innerHeight);
@@ -893,8 +893,15 @@
             location.hash = name;
         }
     }
-    function getJml(path, callback) {
-        path = urlUnescape(path.slice(1));
+    /**
+     * Opt object:
+     * - path: path without single leading
+     * - staticPage: true/false
+     * - width/height: integers
+     * - callback: function of {jml: ..., cls: ...}
+     */
+    function jmlPage(opt) {
+        var path = urlUnescape(opt.path.slice(1));
         var splitPos = path.indexOf("/");
         if(splitPos === -1) {
             splitPos = path.length;
@@ -903,8 +910,8 @@
         var pageArg = path.slice(splitPos + 1);
         var param = {
             staticPage: false,
-            pageName: path,
-            callback: callback
+            path: path,
+            callback: opt.callback
         };
         return urlTable[pageName] && urlTable[pageName](param);
     }
@@ -917,7 +924,7 @@
         function renderPage(data) {
             transition(jmlToDom(data.jml));
         }
-        getJml(path, renderPage);
+        jmlPage({path: path, callback: renderPage});
         switchInProgress = true;
         setTimeout(function() {
             switchInProgress = false;
@@ -1084,7 +1091,7 @@
             });
         });
         app.get("*", function(req, res) {
-            getJml(req.url, function(data) {
+            jmlPage({path: req.url, staticPage: true, callback: function(data) {
                 var page = "";
                 res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
@@ -1097,7 +1104,7 @@
                     ["body", {onload: "window.main()"},
                         data.jml,
                     ]]))
-            });
+            }});
         });
     } //}}}
     function socketOnConnection(socket) {
