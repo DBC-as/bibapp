@@ -422,13 +422,7 @@
                     status: "available"
                 }},
             searches: {
-                "sample search string": {
-                    id: "sample search string",
-                    lastSync: 1356706097976,
-                    resultCount: 1324,
-                    resultsLoaded: 10,
-                    results: [sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, 
-                              sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult, sampleSearchResult]} }}; //}}}
+            }}; //}}}
         var patron = { //{{{
             lastSync: Date.now(),
             name: "Joe User",
@@ -585,7 +579,7 @@
             searchButton: css({
                 height: unit, width: unit
             }).on("click mousedown touch", function() {
-                var query = document.getElementsByClassName("searchInput")[0].value || "sample search string";
+                var query = document.getElementsByClassName("searchInput")[0].value;
                 go("search/" + query);
             }),
             searchResult: css({
@@ -626,7 +620,7 @@
         return result;
     } //}}}
     // Layout {{{
-    function frontPage() { //{{{
+    function frontPage(arg) { //{{{
         function patronWidgetContent() { //{{{
             // Vis lånerstatus hvis logget ind, samt synkroniseret indenfor
             // det sidste halve døgn.
@@ -671,7 +665,7 @@
                 return ["div.widgetItem", ["span.widgetDate", formatDate(event.date)], " ", event.title];
             });
         } //}}}
-        return ["div.page.frontPage",  //{{{
+        arg.callback({jml: ["div.page.frontPage",  //{{{
                 ["div.header", 
                     ["div.searchLine.w5.line", 
                         ["input.searchInput", {placeholder: "søg", type: "search"}]],
@@ -683,21 +677,11 @@
                     ["div.largeWidget.newsWidget.w6", 
                         ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
                     ["div.largeWidget.calendarWidget.w6", 
-                        ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]];  //}}}
+                        ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]]});  //}}}
     } //}}}
-    function resultsPage(query) { //{{{
-        function jmlResult(result) {
-            return ["div", 
-                        ["div.searchResult.w1",
-                            ["img.resultImg", {src: result.thumbUrl}]],
-                        ["div.searchResult.w4",
-                            ["div.resultTitle.resultLine", result.title],
-                            ["div.resultCreator.resultLine", result.creator],
-                            ["div.resultDescription.resultLine", result.description]],
-                        ["span.orderButton.w1.line", ["span.icon.icon-shopping-cart", ""]]
-                            ];
-                        //["div.w1.line", "Bestil"]];
-        }
+    function resultsPage(arg) { //{{{
+        var query = arg.pageName.replace(/[^\/]*\//, "");
+        console.log("query:", query);
         if(isClient) {
             var styles = genStyles(window.innerWidth, window.innerHeight);
             rpcCall("BibAppSearch", {query: query, page: 0}, function(err, data) {
@@ -727,16 +711,16 @@
             });
         }
         // TODO: facets
-        return ["div.page.searchResults", //{{{
+        arg.callback({jml: ["div.page.searchResults", //{{{
                 ["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["div.searchLine.w4.line", 
                         ["input.searchInput", {value: query, type: "search"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
-                ["div.content", {id: "results:" + query}].concat(searchResults(query).map(jmlResult))]; //}}}
+                ["div.content", {id: "results:" + query}]]}); //}}}
     } //}}}
-    function loginPage() {//{{{
-        return ["div.page.login", 
+    function loginPage(arg) {//{{{
+        arg.callback({jml:["div.page.login", 
                 ["span.w6.spacing.largeWidget", ""],
                 ["div.w2.right", "Brugerid:"],
                 ["input.w4.line", ""],
@@ -745,9 +729,9 @@
                 ["span.w2.spacing", ""],
                 ["div.w2.line.button", "Annuller"],
                 ["div.w2.line.button", "Log ind"],
-                ["span.w6.spacing.largeWidget", ""]]; 
+                ["span.w6.spacing.largeWidget", ""]]}); 
     }//}}}
-    function patronPage() { //{{{
+    function patronPage(arg) { //{{{
         var content = ["div.content"];
 
         function arrivedEntry(entry) {
@@ -790,12 +774,12 @@
             content = content.concat(reservations.map(reservationEntry));
         }
 
-        return ["div.page.patronInfo", 
+        arg.callback({jml:["div.page.patronInfo", 
                 ["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
                     ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
-                content];
+                content]});
     }//}}}
     function bibentryPage() { }
     // TODO: Single-book/material page
@@ -879,12 +863,27 @@
 
     // Control {{{1
     var urlTable = {
-        "": frontPage,
+        default: frontPage,
         home: frontPage,
         search: resultsPage,
         bibentry: bibentryPage,
         patron: patronPage
     };
+    // Notes:
+    // - initial page immediately for transition
+    // - static page for nojs/searchengine
+    // - keep page updated
+    //
+    // page:
+    // fn: (clientInfo, desired page, 
+    // data:
+    //     staticPage: true/false
+    //     pageName: string
+    //     width: int,
+    //     height: int,
+    //     callback: (data {jml: ..., cls: ...})
+    //
+    // 
     function go(name) {
         if(window.history && window.history.pushState) {
             name = "/" + name; 
@@ -894,8 +893,7 @@
             location.hash = name;
         }
     }
-    function getJml(path) {
-        socket.emit("status", {"getJml": path});
+    function getJml(path, callback) {
         path = urlUnescape(path.slice(1));
         var splitPos = path.indexOf("/");
         if(splitPos === -1) {
@@ -903,7 +901,12 @@
         }
         var pageName = path.slice(0, splitPos);
         var pageArg = path.slice(splitPos + 1);
-        return urlTable[pageName] && urlTable[pageName](pageArg);
+        var param = {
+            staticPage: false,
+            pageName: path,
+            callback: callback
+        };
+        return urlTable[pageName] && urlTable[pageName](param);
     }
     var switchInProgress = false;
     function goCurrent() {
@@ -911,7 +914,10 @@
             return;
         }
         var path = location.hash || location.pathname;
-        transition(jmlToDom(getJml(path)));
+        function renderPage(data) {
+            transition(jmlToDom(data.jml));
+        }
+        getJml(path, renderPage);
         switchInProgress = true;
         setTimeout(function() {
             switchInProgress = false;
@@ -1078,8 +1084,9 @@
             });
         });
         app.get("*", function(req, res) {
-            var page = "";
-            res.end("<!DOCTYPE html>" + jmlToStr(["html",
+            getJml(req.url, function(data) {
+                var page = "";
+                res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
                         ["title", "BibApp"],
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
@@ -1088,8 +1095,9 @@
                         ["script", {src: "/bibapp.js"}, ""]
                     ],
                     ["body", {onload: "window.main()"},
-                        getJml(req.url)
-                    ]]));
+                        data.jml,
+                    ]]))
+            });
         });
     } //}}}
     function socketOnConnection(socket) {
