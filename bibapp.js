@@ -797,6 +797,7 @@
                     ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
                 content];
     }//}}}
+    function bibentryPage() { }
     // TODO: Single-book/material page
     // TODO: News page
     // TODO: Calendar page (header: home-icon, overskrift)
@@ -881,6 +882,7 @@
         "": frontPage,
         home: frontPage,
         search: resultsPage,
+        bibentry: bibentryPage,
         patron: patronPage
     };
     function go(name) {
@@ -903,9 +905,17 @@
         var pageArg = path.slice(splitPos + 1);
         return urlTable[pageName] && urlTable[pageName](pageArg);
     }
+    var switchInProgress = false;
     function goCurrent() {
+        if(switchInProgress) {
+            return;
+        }
         var path = location.hash || location.pathname;
         transition(jmlToDom(getJml(path)));
+        switchInProgress = true;
+        setTimeout(function() {
+            switchInProgress = false;
+        }, 100);
     }
     if(isClient) {
         window.onpopstate = goCurrent;
