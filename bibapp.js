@@ -8,9 +8,54 @@
     var host = "localhost";
     var port = 8888;
     // Util {{{1
-    // client socket
+
+    // RPC {{{
+    function registerRPC(socket) {
+        socket.on("rpc", function(data) {
+            if(data.response) {
+                if(rpcRequests[data.response]) {
+                    rpcRequests[data.response](data.error, data.result);
+                    delete rpcRequests[data.response];
+                }
+            } else if(data.request) {
+                if(rpcFunctions[data.fn]) {
+                    rpcFunctions[data.fn](data.content, function(error, result) {
+                        socket.emit("rpc", {response: data.request, error: error, result: result});
+                    });
+                } else {
+                    socket.emit("rpc", {id: data.requestId, error: "function not found: " + data.fn});
+                }
+            }
+        });
+    }
+    var rpcFunctions = {};
+    var rpcRequests = {};
+    var rpcRequestCount = 0;
+    var rpcTimeout = 10000;
+
+    function rpcCallback(name, fn) {
+        rpcFunctions[name] = fn;
+    }
+
+    function rpcCall(name, data, callback) {
+        var id = ++rpcRequestCount;
+        rpcRequests[id] = callback;
+        setTimeout(function() {
+            if(rpcRequests[id]) {
+                rpcRequests[id]("timeout", undefined);
+                delete rpcRequests[id];
+            }
+        }, rpcTimeout);
+        socket.emit("rpc", {fn: name, request: id, content: data});
+    }
+    //}}}
+    // client socket {{{
     var io = isServer ? require('socket.io-client') : window.io;
     var socket = io.connect("http://" + host + ":" + port);
+    registerRPC(socket);
+    
+    
+    //}}}
     function arrayToSetObject(arr) { //{{{
         var i;
         var result = {};
@@ -19,15 +64,15 @@
         }
         return result;
     } //}}}
-    function notEmpty(obj) {
+    function notEmpty(obj) { //{{{
         return Object.keys(obj).length !== 0;
-    }
+    }//}}}
     var xmlEntities = { //{{{
         amp: "&",
         quot: "\"",
         nbsp: "\xa0",
     }; //}}}
-    function jmlFilterWs(jml) {
+    function jmlFilterWs(jml) { //{{{
         if(typeof jml === "string") {
             return jml.trim();
         } else if(Array.isArray(jml)) {
@@ -35,7 +80,7 @@
         } else {
             return jml;
         }
-    }
+    } //}}}
     function strToJml(str) { //{{{
         var errors = [];
         function JsonML_Error(str) {
@@ -652,6 +697,15 @@
                         ["span.orderButton.w1.line", ["span.icon.icon-shopping-cart", ""]]];
                         //["div.w1.line", "Bestil"]];
         }
+        if(isClient) {
+            rpcCall("BibAppSearch", {query: query, page: 0}, function(err, data) {
+                if(err) {
+                    // TODO: handle errors in ui
+                    throw err;
+                }
+                document.getElementById("results:" + query).innerHTML = JSON.stringify(data);
+            });
+        }
         // TODO: facets
         return ["div.page.searchResults", //{{{
                 ["div.header", 
@@ -659,7 +713,7 @@
                     ["div.searchLine.w4.line", 
                         ["input.searchInput", {value: query, type: "search"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
-                ["div.content"].concat(searchResults(query).map(jmlResult))]; //}}}
+                ["div.content", {id: "results:" + query}].concat(searchResults(query).map(jmlResult))]; //}}}
     } //}}}
     function loginPage() {//{{{
         return ["div.page.login", 
@@ -963,8 +1017,19 @@
         }
     } //}}}
     //}}}
+    // API {{{
+    function API() {
+        rpcCallback("BibAppSearch", function(data, callback) {
+            bibSearch(data.query, data.page, callback);
+        });
+        rpcCallback("BibAppEntry", function(data, callback) {
+            bibEntry(id, callback);
+        });
+    }
+    
+    //}}}
     // Serve data {{{
-    function webServer(app) {
+    function webServer(app) { //{{{
         var express = require("express");
         var fs = require("fs");
 
@@ -989,11 +1054,9 @@
                         getJml(req.url)
                     ]]));
         });
-    }
+    } //}}}
     function socketOnConnection(socket) {
-            socket.on("status", function(data) {
-                console.log(socket.id, data);
-            });
+        registerRPC(socket);
     }
     function startServer() {
         var express = require("express");
@@ -1003,6 +1066,7 @@
         webServer(app);
         io.sockets.on("connection", socketOnConnection);
 
+        API();
         server.listen(port);
         console.log("started server on", port);
     }
@@ -1105,6 +1169,9 @@
         if(command === "test") {
             runTests();
         } else if(command === "fetch") {
+            rpcCall("hello", undefined, function(err, data) {
+                console.log(err,data);
+            });
             //bibEntry("710100:28958129", function(err, result) {
             //bibSearch("coelho", 6, function(err, result) {
             //bibSearch("jensen", 0, function(err, result) {
