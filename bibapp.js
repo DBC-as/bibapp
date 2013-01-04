@@ -274,7 +274,9 @@
                 elem.setAttribute(prop, attr[prop]);
             }
             while(pos < jml.length) {
-                elem.appendChild(jmlToDom(jml[pos]));
+                if(jml[pos]) {
+                    elem.appendChild(jmlToDom(jml[pos]));
+                }
                 ++pos;
             }
             return elem;
@@ -369,6 +371,10 @@
                 entry.apply(domNode);
             }
         }
+        if(table["default"]) {
+            table["default"].apply(domNode);
+        }
+
         var children = domNode.children;
         for(i=0; i<children.length; ++i) {
             domRecursiveApply(children[i], table);
@@ -494,6 +500,16 @@
             });
         } //}}}
         var result = { //{{{
+            "default": (new DomProcess()).bind(function(dom) {
+                (function(href) {
+                    if(href && href[0] === "/") {
+                        dom.onclick = function() {
+                            go(href.slice(1));
+                            return false;
+                        }
+                    }
+                })(dom.getAttribute("href"));
+            }),
             patronStatus: css({
                 textAlign: "center"
             }),
@@ -619,6 +635,8 @@
         }; //}}}
         return result;
     } //}}}
+    var cache = {
+    }
     // Layout {{{
     function frontPage(arg) { //{{{
         function patronWidgetContent() { //{{{
@@ -696,17 +714,30 @@
                 // TODO: handle errors in ui
                 throw err;
             }
+
+            // Cache result
+            cache["search:" + 0 + ":" + query] = { cached: Date.now(),
+                results: data.map(function(entry) { return entry.id; })};
+            data.forEach(function(entry) {
+                var cacheEntry = cache["entry:" + entry.id];
+                if(!cacheEntry) {
+                    cache["entry:" + entry.id] = cacheEntry = entry;
+                }
+                cacheEntry.cached = Date.now();
+            });
+
+            console.log(data);
             var result = data.map(function(entry) {
                 return ["div", 
-                    ["a.searchResult.w1.applink",
+                    ["a.searchResult.w1.go",
                         {href: "/bibentry/" + entry.id},
                         ["img.resultImg", {src: entry.coverUrl}]],
-                    ["a.div.searchResult.w4.applink",
+                    ["a.div.searchResult.w4.go",
                         {href: "/bibentry/" + entry.id},
                         ["div.resultTitle.resultLine", entry.title || "untitled"],
                         ["div.resultCreator.resultLine", entry.creator || "unknown origin"],
                         ["div.resultDescription.resultLine", entry["abstract"] || (entry.subject || []).join(" ")]],
-                    ["a.orderButton.w1.line.applink", 
+                    ["a.orderButton.w1.line.go", 
                         {href: ("/order/" + entry.id)}, 
                         ["span.icon.icon-shopping-cart", ""]]];
             });
@@ -788,7 +819,27 @@
                     ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
                 content]});
     }//}}}
-    function bibentryPage() { }
+    function bibentryPage(opt) { //{{{
+        console.log(opt);
+        //opt.callback({jml:["div", "todo ", opt.path]});
+        rpcCall("BibAppEntry", opt.path, function(err, data) {
+            console.log(data);
+        });
+        var cachedEntry = cache["entry:" + opt.path];
+        if(cachedEntry) {
+            opt.callback({jml:["div.page", 
+                ["div.header", 
+                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
+                    ["span.patronStatus.w4.line", cachedEntry.title, ["em", " af "], " " + cachedEntry.creator],
+                    ["span.backButton.w1.line", {onclick: "history.back()"}, ["span.icon.icon-arrow-left", ""]],
+                ],
+
+                ]});
+        } else {
+            opt.callback({jml:["div.page", "error: not in cache"]});
+        }
+        console.log("cached:", cachedEntry);
+    } //}}}
     // TODO: Single-book/material page
     // TODO: News page
     // TODO: Calendar page (header: home-icon, overskrift)
@@ -1062,16 +1113,32 @@
     // API {{{
     function API() {
         rpcCallback("BibAppSearch", function(data, callback) {
-            bibSearch(data.query, data.page, function(err, data) {
-                if(err) {
-                    callback(err,data);
-                } else {
-                    callback(err,data);
-                }
-            });
+            bibSearch(data.query, data.page, callback);
         });
-        rpcCallback("BibAppEntry", function(data, callback) {
-            bibEntry(id, callback);
+        rpcCallback("BibAppEntry", function(id, callback) {
+            bibEntry(id, function(err, data) {
+                if(err) {
+                    return callback(err, data);
+                }
+                // id, isCollection, coverUrl, title, creator, date, subject, abstract 
+                var result = {
+                    id: id,
+                    title: data.title && data.title[0],
+                    creator: data.creators && data.creators[0],
+                    date: data.date && data.date[0],
+                    coverUrl: data.coverUrl && data.coverUrl[0],
+                    subjects: data.subjects,
+                    "abstract": data["abstract"] && data["abstract"][0],
+                    details: {}
+                };
+                for(var key in data) {
+                    if(key.match(/^[A-ZÅÆØ]/)) {
+                        result.details[key] = data[key];
+                    }
+                }
+
+                callback(err, result);
+            });
         });
     }
     
