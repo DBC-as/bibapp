@@ -8,7 +8,12 @@
     var host = "localhost";
     var port = 8888;
     // Util {{{1
-
+    function uniqId(prefix) {
+        prefix = prefix || "_";
+        ++uniqIdCounter;
+        return prefix + String(uniqIdCounter);
+    }
+    var uniqIdCounter = 0;
     // RPC {{{
     function registerRPC(socket) {
         socket.on("rpc", function(data) {
@@ -503,6 +508,7 @@
             "default": (new DomProcess()).bind(function(dom) {
                 (function(href) {
                     if(href && href[0] === "/") {
+                        dom.removeAttribute("href");
                         dom.onclick = function() {
                             go(href.slice(1));
                             return false;
@@ -637,6 +643,9 @@
     } //}}}
     var cache = {
     }
+    if(isClient) {
+        window.cache = cache;
+    }
     // Layout {{{
     function frontPage(arg) { //{{{
         function patronWidgetContent() { //{{{
@@ -699,6 +708,7 @@
     } //}}}
     function resultsPage(opt) { //{{{
         var query = opt.path;
+        var id = uniqId();
         function deliverResultsPage(results) {
             opt.callback({jml: ["div.page.searchResults", //{{{
                 ["div.header", 
@@ -706,7 +716,7 @@
                     ["div.searchLine.w4.line", 
                         ["input.searchInput", {value: query, type: "search"}]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
-                ["div.content", {id: "results:" + query}].concat(results)]}); //}}}
+                ["div.content", {id: id}].concat(results)]}); //}}}
         }
         rpcCall("BibAppSearch", {query: query, page: 0}, function(err, data) {
             // id, isCollection, coverUrl, title, creator, date, subject, abstract 
@@ -730,10 +740,10 @@
             var result = data.map(function(entry) {
                 return ["div", 
                     ["a.searchResult.w1.go",
-                        {href: "/bibentry/" + entry.id},
+                        {href: "/bibEntry/" + entry.id},
                         ["img.resultImg", {src: entry.coverUrl}]],
                     ["a.div.searchResult.w4.go",
-                        {href: "/bibentry/" + entry.id},
+                        {href: "/bibEntry/" + entry.id},
                         ["div.resultTitle.resultLine", entry.title || "untitled"],
                         ["div.resultCreator.resultLine", entry.creator || "unknown origin"],
                         ["div.resultDescription.resultLine", entry["abstract"] || (entry.subject || []).join(" ")]],
@@ -743,7 +753,7 @@
             });
             if(isClient) {
                 var styles = genStyles(window.innerWidth, window.innerHeight);
-                var elem = document.getElementById("results:" + query);
+                var elem = document.getElementById(id);
                 result.forEach(function(jml) {
                     var dom = jmlToDom(jml);
                     domRecursiveApply(dom, genStyles(Math.min(window.innerHeight, window.innerWidth), window.innerHeight));
@@ -819,26 +829,65 @@
                     ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
                 content]});
     }//}}}
-    function bibentryPage(opt) { //{{{
+    function bibEntryPage(opt) { //{{{
+        function bibEntryContent(entry) {
+            entry.subject = entry.subject || [];
+            return [["div.header", 
+                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
+                    ["span.patronStatus.w4.line", entry.title, ["em", " af "], " " + entry.creator],
+                    ["span.backButton.w1.line", {onclick: "history.back()"}, ["span.icon.icon-arrow-left", ""]]],
+                ["div.content", 
+                    ["img.w2", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
+                    ["div.w4",
+                        ["div", entry.title],
+                        ["div", entry.date],
+                        ["div", entry.creator]],
+                    ["div.w6", entry["abstract"]],
+                    ["div"].concat(entry.details ? 
+                        Object.keys(entry.details).map(function(key) {
+                            return ["div", ["span.w2", key, ": "], ["span.w4", entry.details[key].join(", ")]];
+                        }) :
+                        [["div", entry.subject.join(", ")]])]];
+        }
         console.log(opt);
         //opt.callback({jml:["div", "todo ", opt.path]});
         rpcCall("BibAppEntry", opt.path, function(err, data) {
             console.log(data);
         });
         var cachedEntry = cache["entry:" + opt.path];
-        if(cachedEntry) {
-            opt.callback({jml:["div.page", 
-                ["div.header", 
-                    ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
-                    ["span.patronStatus.w4.line", cachedEntry.title, ["em", " af "], " " + cachedEntry.creator],
-                    ["span.backButton.w1.line", {onclick: "history.back()"}, ["span.icon.icon-arrow-left", ""]],
-                ],
-
-                ]});
-        } else {
-            opt.callback({jml:["div.page", "error: not in cache"]});
-        }
         console.log("cached:", cachedEntry);
+        if(isServer) {
+            rpcCall("BibAppEntry", opt.path, function(err, data) {
+                if(err) {
+                    opt.callback({jml:["div.page", "error:", JSON.stringify(err)]});
+                } else {
+                    opt.callback({jml:["div.page"].concat(bibEntryContent(data))});
+                }
+            });
+        } else {
+            var id = uniqId();
+            if(cachedEntry) {
+                opt.callback({jml:["div.page", {id: id}].concat(bibEntryContent(cachedEntry))});
+            } else {
+                opt.callback({jml:["div.page", {id: id}]});
+            }
+            rpcCall("BibAppEntry", opt.path, function(err, data) {
+                if(err) {
+                    // TODO: error handling
+                } else {
+                    var elem = document.getElementById(id);
+                    console.log(id, elem);
+                    while(elem.childNodes.length > 0) {
+                        elem.removeChild(elem.childNodes[0]);
+                    }
+                    var content = bibEntryContent(data);
+                    for(var i = 0; i < content.length; ++i) {
+                        elem.appendChild(jmlToDom(content[i]));
+                    }
+                    domRecursiveApply(elem, genStyles(Math.min(window.innerHeight, window.innerWidth), window.innerHeight));
+                }
+            });
+        }
     } //}}}
     // TODO: Single-book/material page
     // TODO: News page
@@ -924,7 +973,7 @@
         default: frontPage,
         home: frontPage,
         search: resultsPage,
-        bibentry: bibentryPage,
+        bibEntry: bibEntryPage,
         patron: patronPage
     };
     // Notes:
@@ -1127,7 +1176,7 @@
                     creator: data.creators && data.creators[0],
                     date: data.date && data.date[0],
                     coverUrl: data.coverUrl && data.coverUrl[0],
-                    subjects: data.subjects,
+                    subject: data.subjects,
                     "abstract": data["abstract"] && data["abstract"][0],
                     details: {}
                 };
