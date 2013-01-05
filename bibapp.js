@@ -567,6 +567,7 @@
                 marginLeft: 0,
                 paddingLeft: 0,
                 marginTop: 0,
+                overflow: "hidden",
                 height: unit+margin * 1, width: width,
                 background: "rgba(0, 0, 32, .8)",
                 boxShadow: "0px 0px " + unit + "px rgba(32,32,0,1)",
@@ -627,6 +628,9 @@
                             "0px 1px 2px rgba(255,255,255,1)," +
                             "1px 0px 2px rgba(255,255,255,1)" ,
                 borderRadius: margin
+            }).on("submit search", function() {
+                var query = document.getElementsByClassName("searchInput")[0].value;
+                go("search/" + query);
             }),
             resultLine: css({
                 clear: "none"
@@ -746,7 +750,7 @@
                         {href: "/bibEntry/" + entry.id},
                         ["div.resultTitle.resultLine", entry.title || "untitled"],
                         ["div.resultCreator.resultLine", entry.creator || "unknown origin"],
-                        ["div.resultDescription.resultLine", entry["abstract"] || (entry.subject || []).join(" ")]],
+                        ["div.resultDescription.resultLine", entry.description || (entry.subject || []).join(" ")]],
                     ["a.orderButton.w1.line.go", 
                         {href: ("/order/" + entry.id)}, 
                         ["span.icon.icon-shopping-cart", ""]]];
@@ -842,7 +846,7 @@
                         ["div", entry.title],
                         ["div", entry.date],
                         ["div", entry.creator]],
-                    ["div.w6", entry["abstract"]],
+                    ["div.w6", entry.description],
                     ["div"].concat(entry.details ? 
                         Object.keys(entry.details).map(function(key) {
                             return ["div", ["span.w2", key, ": "], ["span.w4", entry.details[key].join(", ")]];
@@ -1091,7 +1095,7 @@
                 var attr = data[1];
                 var classes = attr["class"] && arrayToSetObject(attr["class"].split(" ")) || {};
                 if(data[0] === "h2") { len3(); set("title", data[2]); }
-                if(classes["abstract"]) { len3(); set("abstract", data[2]); }
+                if(classes["abstract"]) { len3(); set("description", data[2]); }
                 if(classes["date"]) { len3(); set("date", data[2]); }
                 if(classes["left-column"]) {
                     if(data[3][1]["class"] !== "picture") { warn("expecting picture", data); };
@@ -1146,7 +1150,7 @@
                                 result.subject = (result.subject||[]).concat([elem[2]]);
                             }
                             if(cls === "creator" && elem[2] === "Af") { result.creator = elem[3][2] };
-                            if(cls === "abstract") { result["abstract"] = elem[2] };
+                            if(cls === "abstract") { result.description = elem[2] };
                             if(elem[0] === "h3") { result.title = elem[2][2]; }
                             elem.slice(2).forEach(bibVisitor);
                         }
@@ -1210,7 +1214,7 @@
                     date: data.date && data.date[0],
                     coverUrl: data.coverUrl && data.coverUrl[0],
                     subject: data.subjects,
-                    "abstract": data["abstract"] && data["abstract"][0],
+                    description: data.description && data.description[0],
                     details: {}
                 };
                 for(var key in data) {
