@@ -1161,6 +1161,39 @@
     //}}}
     // API {{{
     function API() {
+        rpcCallback("BibNews", function(data, callback) {
+            callback(undefined, [
+                {date: Date.now() - 10000000,
+                url: "http://example.com/event",
+                title: "Eventtitle 1",
+                description: "description"},
+                {date: Date.now() - 20000000,
+                url: "http://example.com/event",
+                title: "Eventtitle 2",
+                description: "description"},
+                {date: Date.now(),
+                url: "http://example.com/event",
+                title: "Eventtitle 3",
+                description: "description"}]);
+        });
+        rpcCallback("BibCalendar", function(data, callback) {
+            callback(undefined, [
+                {date: Date.now() + 10000000,
+                coverUrl: "http://example.com/eventicon.jpg",
+                url: "http://example.com/event",
+                title: "Eventtitle 1",
+                description: "description"},
+                {date: Date.now() + 20000000,
+                coverUrl: "http://example.com/eventicon.jpg",
+                url: "http://example.com/event",
+                title: "Eventtitle 2",
+                description: "description"},
+                {date: Date.now(),
+                coverUrl: "http://example.com/eventicon.jpg",
+                url: "http://example.com/event",
+                title: "Eventtitle 3",
+                description: "description"}]);
+        });
         rpcCallback("BibAppSearch", function(data, callback) {
             bibSearch(data.query, data.page, callback);
         });
