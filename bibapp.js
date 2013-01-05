@@ -370,10 +370,12 @@
     } //}}}
     function domRecursiveApply(domNode, table) { //{{{
         var classes = domNode.classList;
-        for(var i = 0; i < classes.length; ++i) {
-            var entry = table[classes[i]];
-            if(entry) {
-                entry.apply(domNode);
+        if(classes) {
+            for(var i = 0; i < classes.length; ++i) {
+                var entry = table[classes[i]];
+                if(entry) {
+                    entry.apply(domNode);
+                }
             }
         }
         if(table["default"]) {
