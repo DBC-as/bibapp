@@ -742,15 +742,25 @@
 
             console.log(data);
             var result = data.map(function(entry) {
-                return ["div", 
+                return ["div", {
+                            "xmlns:dc": "http://purl.org/dc/elements/1.1/",
+                            itemscope: "itemscope",
+                            itemtype: "http://schema.org/CreativeWork",
+                            about: "http://bibdata.dk/bibEntry/" + entry.id},
+                    ["meta", {itemtype: "url", content: "http://bibdata.dk/bibEntry/" + entry.id}],
                     ["a.searchResult.w1.go",
                         {href: "/bibEntry/" + entry.id},
                         ["img.resultImg", {src: entry.coverUrl}]],
-                    ["a.div.searchResult.w4.go",
-                        {href: "/bibEntry/" + entry.id},
-                        ["div.resultTitle.resultLine", entry.title || "untitled"],
-                        ["div.resultCreator.resultLine", entry.creator || "unknown origin"],
-                        ["div.resultDescription.resultLine", entry.description || (entry.subject || []).join(" ")]],
+                    ["a.div.searchResult.w4.go", {href: "/bibEntry/" + entry.id},
+                        ["div.resultTitle.resultLine", 
+                            {property: "dc:title", itemprop: "name"}, 
+                            entry.title],
+                        ["div.resultCreator.resultLine", 
+                            {property: "dc:creator", itemprop: "creator"}, 
+                             entry.creator],
+                        ["div.resultDescription.resultLine", 
+                            {property: "dc:description", name: "description"}, 
+                            entry.description || (entry.subject || []).join(" ")]],
                     ["a.orderButton.w1.line.go", 
                         {href: ("/order/" + entry.id)}, 
                         ["span.icon.icon-shopping-cart", ""]]];
@@ -836,22 +846,48 @@
     function bibEntryPage(opt) { //{{{
         function bibEntryContent(entry) {
             entry.subject = entry.subject || [];
+            console.log("type:", entry.details && entry.details["Type"]);
+            var typeMap = {
+                "Avisartikel": {schema: "Article"},
+                "Tidsskriftsartikel": {schema: "Article"},
+                "Film (net)": {schema: "Movie"},
+                "Bog": {schema: "Book"},
+                "undefined": {schema: "CreativeWork"},
+            };
+            var itemType = typeMap[entry.details && entry.details["Type"][0]];
+            var detailMap = {
+                "Emner": {schema: "keywords", rdf: "dc:subject"},
+                "Emneord": {schema: "keywords", rdf: "dc:subject"},
+                "Sprog": {schema: "inLanguage", rdf: "dc:language"},
+                "ISBN": {schema: "isbn"},
+            };
             return [["div.header", 
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", entry.title, ["em", " af "], " " + entry.creator],
                     ["span.backButton.w1.line", {onclick: "history.back()"}, ["span.icon.icon-arrow-left", ""]]],
-                ["div.content", 
+                ["div.content", {
+                        "xmlns:dc": "http://purl.org/dc/elements/1.1/",
+                        itemscope: "itemscope",
+                        itemtype: "http://schema.org/" + itemType.schema,
+                        about: "http://bibdata.dk/bibEntry/" + opt.path,
+                    },
                     ["img.w2", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
                     ["div.w4",
-                        ["div", entry.title],
-                        ["div", entry.date],
-                        ["div", entry.creator]],
-                    ["div.w6", entry.description],
+                        ["div", {property: "dc:title", itemprop: "name"}, entry.title],
+                        ["div", {property: "dc:date", itemprop: "datePublished"}, entry.date],
+                        ["div", {property: "dc:creator", itemprop: "creator"}, entry.creator]],
+                    ["div.w6", {property: "dc:description", itemprop: "description"}, entry.description],
                     ["div"].concat(entry.details ? 
                         Object.keys(entry.details).map(function(key) {
-                            return ["div", ["span.w2", key, ": "], ["span.w4", entry.details[key].join(", ")]];
+                            var metaattr = {};
+                            var semInfo = detailMap[key];
+                            if(semInfo) {
+                                if(semInfo.schema) { metaattr.itemprop = semInfo.schema; }
+                                if(semInfo.rdf) { metaattr.property = semInfo.rdf; }
+                            }
+                            return ["div", ["span.w2", key, ": "], ["span.w4", metaattr, entry.details[key].join(", ")]];
                         }) :
-                        [["div", entry.subject.join(", ")]])]];
+                        [["div", {property: "dc:subject", itemprop: "keywords"}, entry.subject.join(", ")]])]];
         }
         console.log(opt);
         //opt.callback({jml:["div", "todo ", opt.path]});
@@ -1258,8 +1294,9 @@
                         ["script", {src: "/depend/socket.io.min.js"}, ""],
                         ["script", {src: "/bibapp.js"}, ""]
                     ],
-                    ["body", {onload: "window.main()"},
+                    ["body", 
                         data.jml,
+                        ["script", "window.main();"]
                     ]]))
             }});
         });
