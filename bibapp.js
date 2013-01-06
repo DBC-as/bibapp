@@ -561,6 +561,8 @@
                 fontSize: unit * 0.65 - 2
             }),
             page: css({
+                WebkitTransform: "translate3d(0,0,0)",
+                webkitTransform: "translate3d(0,0,0)",
                 verticalAlign: "middle",
                 lineHeight: "100%",
                 fontSize: smallFont,
@@ -790,6 +792,14 @@
             deliverResultsPage([]);
         } 
     } //}}}
+    function landingPage(opt) {//{{{
+        opt.callback({jml:["div", 
+            ["h1", "BibData"],
+            ["div", "Eksperimenter med biblioteksapps og biblioteksdata."],
+            ["ul",
+                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]]]
+        ]}); 
+    }//}}}
     function loginPage(opt) {//{{{
         opt.callback({jml:["div.page.login", 
                 ["span.w6.spacing.largeWidget", ""],
@@ -1020,7 +1030,7 @@
 
     // Control {{{1
     var urlTable = {
-        default: frontPage,
+        default: landingPage,
         home: frontPage,
         search: resultsPage,
         work: bibEntryPage,
