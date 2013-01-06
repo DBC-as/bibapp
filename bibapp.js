@@ -5,8 +5,10 @@
     var isClient = !!(typeof window === "object" && window.document);
     var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
     // Config {{{1
-    var host = "localhost";
-    var port = 8888;
+    if(isServer) {
+        var host = "localhost";
+        var port = 8888;
+    }
     // Util {{{1
     function uniqId(prefix) {
         prefix = prefix || "_";
@@ -55,8 +57,13 @@
     }
     //}}}
     // client socket {{{
-    var io = isServer ? require('socket.io-client') : window.io;
-    var socket = io.connect("http://" + host + ":" + port);
+    if(isServer) {
+        var io = require('socket.io-client');
+        var socket = io.connect("http://" + host + ":" + port);
+    } else {
+        var io = window.io;
+        var socket = io.connect(location.origin);
+    }
     registerRPC(socket);
     
     
@@ -1380,7 +1387,7 @@
         var Browser = require("zombie");
         var browser = new Browser();
         browser
-            .visit("http://localhost:8888/", {debug: true})
+            .visit("http://" + host + ":" + port, {debug: true})
             .then(function() {
                 test.assert(browser.errors.length === 0, "errors from load in client");
                 browser.window.testClient(test);
@@ -1399,7 +1406,7 @@
         var clientSuite = test.suite("client");
         var browser = new Browser();
         browser
-            .visit("http://localhost:8888/", {debug: true})
+            .visit("http://" + host + ":" + port, {debug: true})
             .then(function() {
                 browser.window.testClient(clientSuite);
             }).fail(function() {
