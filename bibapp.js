@@ -7,7 +7,7 @@
     // Config {{{1
     if(isServer) {
         var host = "localhost";
-        var port = 8888;
+        var port = 7777;
     }
     // Util {{{1
     function uniqId(prefix) {
