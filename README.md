@@ -76,4 +76,4 @@ It may also be running on http://bibdata.dk/.
     - closure compiler for optimisation and library
     - app packaging via cordova
 
-[!logo](http://bibdata.dk/bibdata.png?github)
+![logo](http://bibdata.dk/bibdata.png?github)
