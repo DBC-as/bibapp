@@ -574,6 +574,8 @@
                 background: "#ffe"
             }),
             header: css({
+                WebkitTransform: "translate3d(0,0,0)",
+                webkitTransform: "translate3d(0,0,0)",
                 position: "fixed",
                 marginLeft: 0,
                 paddingLeft: 0,
