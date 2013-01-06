@@ -733,7 +733,7 @@
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content", {id: id}].concat(results)]}); //}}}
         }
-        rpcCall("BibAppSearch", {query: query, page: 0}, function(err, data) {
+        rpcCall("BibDataSearch", {query: query, page: 0}, function(err, data) {
             // id, isCollection, coverUrl, title, creator, date, subject, abstract 
             if(err) {
                 // TODO: handle errors in ui
@@ -911,13 +911,13 @@
         }
         console.log(opt);
         //opt.callback({jml:["div", "todo ", opt.path]});
-        rpcCall("BibAppEntry", opt.path, function(err, data) {
+        rpcCall("BibDataEntry", opt.path, function(err, data) {
             console.log(data);
         });
         var cachedEntry = cache["entry:" + opt.path];
         console.log("cached:", cachedEntry);
         if(isServer) {
-            rpcCall("BibAppEntry", opt.path, function(err, data) {
+            rpcCall("BibDataEntry", opt.path, function(err, data) {
                 if(err) {
                     opt.callback({jml:["div.page", "error:", JSON.stringify(err)]});
                 } else {
@@ -931,7 +931,7 @@
             } else {
                 opt.callback({jml:["div.page", {id: id}]});
             }
-            rpcCall("BibAppEntry", opt.path, function(err, data) {
+            rpcCall("BibDataEntry", opt.path, function(err, data) {
                 if(err) {
                     // TODO: error handling
                 } else {
@@ -1254,10 +1254,10 @@
                 title: "Eventtitle 3",
                 description: "description"}]);
         });
-        rpcCallback("BibAppSearch", function(data, callback) {
+        rpcCallback("BibDataSearch", function(data, callback) {
             bibSearch(data.query, data.page, callback);
         });
-        rpcCallback("BibAppEntry", function(id, callback) {
+        rpcCallback("BibDataEntry", function(id, callback) {
             bibEntry(id, function(err, data) {
                 if(err) {
                     return callback(err, data);
@@ -1291,8 +1291,8 @@
         var fs = require("fs");
 
         app.use("/depend", express["static"](__dirname + "/depend"));
-        app.get("/bibapp.js", function(req, res) {
-            fs.readFile("bibapp.js", "utf8", function(err, data) {
+        app.get("/bibdata.js", function(req, res) {
+            fs.readFile("bibdata.js", "utf8", function(err, data) {
                 if(err) throw err;
                 res.end(data);
             });
@@ -1302,7 +1302,7 @@
                 var page = "";
                 res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
-                        ["title", "BibApp"],
+                        ["title", "BibData"],
                         ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
                         ["meta", {"http-equiv": "X-UA-Compatible", content: "IE=edge,chrome=1"}],
                         ["meta", {"name": "HandheldFriendly", content: "true"}],
@@ -1312,7 +1312,7 @@
                         ["meta", {"name": "apple-mobile-web-app-status-bar-style", content: "black"}],
                         ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}],
                         ["script", {src: "/depend/socket.io.min.js"}, ""],
-                        ["script", {src: "/bibapp.js"}, ""]
+                        ["script", {src: "/bibdata.js"}, ""]
                     ],
                     ["body", 
                         data.jml,
@@ -1408,7 +1408,7 @@
     } //}}}
     function runTests() { //{{{
         var Browser = require("zombie");
-        var test = new TestSuite("BibApp", process.exit);
+        var test = new TestSuite("BibData", process.exit);
 
         testServer(test.suite("server"));
 

@@ -1,8 +1,8 @@
 {
-  "name": "bibapp",
+  "name": "bibdata",
   "version": "0.0.1",
   "author": "Rasmus Erik",
-  "homepage": "http://github.com/rasmuserik/bibapp",
+  "homepage": "http://github.com/rasmuserik/bibdata",
   "description": "Hybrid mobile/html5 public library app",
   "dependencies": {
     "request": "*",
@@ -13,7 +13,7 @@
     "socket.io": "*"
   },
   "scripts": {
-      "test": "node bibapp.js test"
+      "test": "node bibdata.js test"
   },
   "engines": {"node": "*"}
 }
