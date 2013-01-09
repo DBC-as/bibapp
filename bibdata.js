@@ -528,6 +528,9 @@
             patronStatus: css({
                 textAlign: "center"
             }),
+            right: css({
+                textAlign: "right"
+            }),
             line: css({
                 marginTop: margin,
                 //textAlign: "center",
@@ -603,9 +606,8 @@
                 float: "left",
                 height: 1.618 * unit,
                 width: unit,
-                backgroundColor: "red",
                 marginRight: margin,
-                marginBottom: margin
+                marginBottom: margin,
             }).on("click", function() {
                 // TODO: remove this example
                 //alert("click");
@@ -622,6 +624,9 @@
             }).on("click mousedown touch", function() {
                 var query = document.getElementsByClassName("searchInput")[0].value;
                 go("search/" + query);
+            }),
+            coverUrl: css({
+                height: (1.618 * 1.618) * unit
             }),
             searchResult: css({
                 marginTop: margin,
@@ -904,12 +909,13 @@
                         about: "http://bibdata.dk/work/" + opt.path,
                     },
                     ["meta", {itemprop: "url", content: "http://bibdata.dk/work/" + entry.id}],
-                    ["img.w2", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
+                    ["img.w2.coverUrl", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
                     ["div.w4",
                         ["div", {property: "dc:title", itemprop: "name"}, entry.title],
                         ["div", {property: "dc:date", itemprop: "datePublished"}, entry.date],
                         ["div", {property: "dc:creator", itemprop: "creator"}, entry.creator]],
                     ["div.w6", {property: "dc:description", itemprop: "description"}, entry.description],
+                    ["br"], ["br"],
                     ["div"].concat(entry.details ? 
                         Object.keys(entry.details).map(function(key) {
                             var metaattr = {};
@@ -918,7 +924,7 @@
                                 if(semInfo.schema) { metaattr.itemprop = semInfo.schema; }
                                 if(semInfo.rdf) { metaattr.property = semInfo.rdf; }
                             }
-                            return ["div", ["span.w2", key, ": "], ["span.w4", metaattr, entry.details[key].join(", ")]];
+                            return ["div", ["span.w3.right", key, ": "], ["span.w3", metaattr, entry.details[key].join(", ")]];
                         }) :
                         [["div", {property: "dc:subject", itemprop: "keywords"}, entry.subject.join(", ")]])]];
         }
