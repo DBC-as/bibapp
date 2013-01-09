@@ -538,6 +538,11 @@
                 go("home");
             }),
             patronWidget: css({
+                //border: "1px outset",
+                textAlign: "center",
+                padding: margin,
+                borderRadius: margin,
+                boxShadow: "3px 3px 9px rgba(0,0,0,0.8)"
             }).on("click mousedown touch", function() {
                 go("patron");
             }),
@@ -714,8 +719,7 @@
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
                     ["div.biblogo.pageHeading.w6", "Demo Bibliotek"],
-                    ["div.patronWidget.w4.line", patronWidgetContent()],
-                    ["div.openingTime.w2.line", "Åbningstider"],
+                    ["div.w6.line", ["div.patronWidget", patronWidgetContent()]],
                     ["div.largeWidget.newsWidget.w6", 
                         ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
                     ["div.largeWidget.calendarWidget.w6", 
@@ -797,8 +801,15 @@
             ["h1", "BibData"],
             ["div", "Eksperimenter med biblioteksapps og biblioteksdata."],
             ["ul",
-                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]]]
+                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]],
+                ["li", ["a", {href:"/desktopbrowser"}, ["button", "...in frame for desktop test"]]]]
         ]}); 
+    }//}}}
+    function desktopBrowser(opt) {//{{{
+        opt.callback({jml:["div", 
+            ["h1", "BibData"],
+            ["div", {style: "text-align: center"},
+            ["iframe", {src:"/home", width:320, height: 480}, ""]]]});
     }//}}}
     function loginPage(opt) {//{{{
         opt.callback({jml:["div.page.login", 
@@ -1034,6 +1045,7 @@
         home: frontPage,
         search: resultsPage,
         work: bibEntryPage,
+        desktopbrowser: desktopBrowser,
         patron: patronPage
     };
     // Notes:
