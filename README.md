@@ -7,7 +7,7 @@ Mobile/html5 public library app.
 Prototype/proof-of-concept implemented:
 
 - mobile html5-app (portrait orientation) prototype. More layouts to come.
-- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) [w3](http://www.w3.org/2007/08/pyRdfa/extract?uri=http://bibdata.dk/work/710100:44251205) (if bibdata.dk is up running).
+- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) or [w3](http://www.w3.org/2007/08/pyRdfa/extract?uri=http://bibdata.dk/work/710100:44251205) (if bibdata.dk is up running).
 
 # How to run
 
