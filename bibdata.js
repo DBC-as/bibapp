@@ -875,7 +875,7 @@
                 "Bog": {schema: "Book"},
                 "undefined": {schema: "CreativeWork"},
             };
-            var itemType = typeMap[entry.details && entry.details["Type"][0]];
+            var itemType = typeMap[entry.details && entry.details["Type"][0]] || typeMap["undefined"];
             var detailMap = {
                 "Emner": {schema: "keywords", rdf: "dc:subject"},
                 "Emneord": {schema: "keywords", rdf: "dc:subject"},
