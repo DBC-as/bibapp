@@ -7,7 +7,7 @@ Mobile/html5 public library app.
 Prototype/proof-of-concept implemented:
 
 - mobile html5-app (portrait orientation) prototype. More layouts to come.
-- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) (if bibdata.dk is up running).
+- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) or [w3](http://www.w3.org/2007/08/pyRdfa/extract?uri=http://bibdata.dk/work/710100:44251205) (if bibdata.dk is up running).
 
 # How to run
 
@@ -20,6 +20,23 @@ Install node.js, check the repository out, and then:
 It may also be running on http://bibdata.dk/.
 
 # Roadmap
+
+- calendar-page
+- news-page
+- styling
+- refactor
+- extend - dont reinsert-full in result-page
+- login
+- loading indicator
+- collection-handling
+- get closure-advanced-mode running
+- closure-typing coverage
+- test coverage
+- search infinite list
+- search dropdown hints
+- cachable rest instead of socket when applicable
+
+----
 
 - Version 0.1
     - Søg bog

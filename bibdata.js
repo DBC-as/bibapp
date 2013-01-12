@@ -528,6 +528,9 @@
             patronStatus: css({
                 textAlign: "center"
             }),
+            right: css({
+                textAlign: "right"
+            }),
             line: css({
                 marginTop: margin,
                 //textAlign: "center",
@@ -538,6 +541,11 @@
                 go("home");
             }),
             patronWidget: css({
+                //border: "1px outset",
+                textAlign: "center",
+                padding: margin,
+                borderRadius: margin,
+                boxShadow: "3px 3px 9px rgba(0,0,0,0.8)"
             }).on("click mousedown touch", function() {
                 go("patron");
             }),
@@ -598,9 +606,8 @@
                 float: "left",
                 height: 1.618 * unit,
                 width: unit,
-                backgroundColor: "red",
                 marginRight: margin,
-                marginBottom: margin
+                marginBottom: margin,
             }).on("click", function() {
                 // TODO: remove this example
                 //alert("click");
@@ -617,6 +624,9 @@
             }).on("click mousedown touch", function() {
                 var query = document.getElementsByClassName("searchInput")[0].value;
                 go("search/" + query);
+            }),
+            coverUrl: css({
+                height: (1.618 * 1.618) * unit
             }),
             searchResult: css({
                 marginTop: margin,
@@ -716,8 +726,7 @@
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
                     ["div.biblogo.pageHeading.w6", "Demo Bibliotek"],
-                    ["div.patronWidget.w4.line", patronWidgetContent()],
-                    ["div.openingTime.w2.line", "Åbningstider"],
+                    ["div.w6.line", ["div.patronWidget", patronWidgetContent()]],
                     ["div.largeWidget.newsWidget.w6", 
                         ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
                     ["div.largeWidget.calendarWidget.w6", 
@@ -799,8 +808,15 @@
             ["h1", "BibData"],
             ["div", "Eksperimenter med biblioteksapps og biblioteksdata."],
             ["ul",
-                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]]]
+                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]],
+                ["li", ["a", {href:"/desktopbrowser"}, ["button", "...in frame for desktop test"]]]]
         ]}); 
+    }//}}}
+    function desktopBrowser(opt) {//{{{
+        opt.callback({jml:["div", 
+            ["h1", "BibData"],
+            ["div", {style: "text-align: center"},
+            ["iframe", {src:"/home", width:320, height: 480}, ""]]]});
     }//}}}
     function loginPage(opt) {//{{{
         opt.callback({jml:["div.page.login", 
@@ -893,12 +909,13 @@
                         about: "http://bibdata.dk/work/" + opt.path,
                     },
                     ["meta", {itemprop: "url", content: "http://bibdata.dk/work/" + entry.id}],
-                    ["img.w2", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
+                    ["img.w2.coverUrl", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
                     ["div.w4",
                         ["div", {property: "dc:title", itemprop: "name"}, entry.title],
                         ["div", {property: "dc:date", itemprop: "datePublished"}, entry.date],
                         ["div", {property: "dc:creator", itemprop: "creator"}, entry.creator]],
                     ["div.w6", {property: "dc:description", itemprop: "description"}, entry.description],
+                    ["br"], ["br"],
                     ["div"].concat(entry.details ? 
                         Object.keys(entry.details).map(function(key) {
                             var metaattr = {};
@@ -907,7 +924,7 @@
                                 if(semInfo.schema) { metaattr.itemprop = semInfo.schema; }
                                 if(semInfo.rdf) { metaattr.property = semInfo.rdf; }
                             }
-                            return ["div", ["span.w2", key, ": "], ["span.w4", metaattr, entry.details[key].join(", ")]];
+                            return ["div", ["span.w3.right", key, ": "], ["span.w3", metaattr, entry.details[key].join(", ")]];
                         }) :
                         [["div", {property: "dc:subject", itemprop: "keywords"}, entry.subject.join(", ")]])]];
         }
@@ -1036,6 +1053,7 @@
         home: frontPage,
         search: resultsPage,
         work: bibEntryPage,
+        desktopbrowser: desktopBrowser,
         patron: patronPage
     };
     // Notes:
