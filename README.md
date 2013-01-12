@@ -21,6 +21,23 @@ It may also be running on http://bibdata.dk/.
 
 # Roadmap
 
+- calendar-page
+- news-page
+- styling
+- refactor
+- extend - dont reinsert-full in result-page
+- login
+- loading indicator
+- collection-handling
+- get closure-advanced-mode running
+- closure-typing coverage
+- test coverage
+- search infinite list
+- search dropdown hints
+- cachable rest instead of socket when applicable
+
+----
+
 - Version 0.1
     - Søg bog
         - søgeresultatliste
