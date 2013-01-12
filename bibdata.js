@@ -1,11 +1,10 @@
 /*! Copyright 2012 Rasmus Erik */
-/*global document:true window:true process:true location:true require:true __dirname:true console:true parseInt:true */
-(function() {
+/*global document:true window:true process:true location:true require:true __dirname:true console:true parseInt:true */ (function() {
     "use strict";
-    var isClient = !!(typeof window === "object" && window.document);
-    var isServer = !!(typeof process === "object" && process.versions && process.versions.node);
+    var isClient = !! (typeof window === "object" && window.document);
+    var isServer = !! (typeof process === "object" && process.versions && process.versions.node);
     // Config {{{1
-    if(isServer) {
+    if (isServer) {
         var host = "localhost";
         var port = 7777;
     }
@@ -19,18 +18,25 @@
     // RPC {{{
     function registerRPC(socket) {
         socket.on("rpc", function(data) {
-            if(data.response) {
-                if(rpcRequests[data.response]) {
+            if (data.response) {
+                if (rpcRequests[data.response]) {
                     rpcRequests[data.response](data.error, data.result);
                     delete rpcRequests[data.response];
                 }
-            } else if(data.request) {
-                if(rpcFunctions[data.fn]) {
+            } else if (data.request) {
+                if (rpcFunctions[data.fn]) {
                     rpcFunctions[data.fn](data.content, function(error, result) {
-                        socket.emit("rpc", {response: data.request, error: error, result: result});
+                        socket.emit("rpc", {
+                            response: data.request,
+                            error: error,
+                            result: result
+                        });
                     });
                 } else {
-                    socket.emit("rpc", {id: data.requestId, error: "function not found: " + data.fn});
+                    socket.emit("rpc", {
+                        id: data.requestId,
+                        error: "function not found: " + data.fn
+                    });
                 }
             }
         });
@@ -48,16 +54,20 @@
         var id = ++rpcRequestCount;
         rpcRequests[id] = callback;
         setTimeout(function() {
-            if(rpcRequests[id]) {
+            if (rpcRequests[id]) {
                 rpcRequests[id]("timeout", undefined);
                 delete rpcRequests[id];
             }
         }, rpcTimeout);
-        socket.emit("rpc", {fn: name, request: id, content: data});
+        socket.emit("rpc", {
+            fn: name,
+            request: id,
+            content: data
+        });
     }
     //}}}
     // client socket {{{
-    if(isServer) {
+    if (isServer) {
         var io = require('socket.io-client');
         var socket = io.connect("http://" + host + ":" + port);
     } else {
@@ -65,43 +75,46 @@
         var socket = io.connect(location.origin);
     }
     registerRPC(socket);
-    
-    
+
+
     //}}}
     function arrayToSetObject(arr) { //{{{
         var i;
         var result = {};
-        for(i=0;i< arr.length; ++i) {
+        for (i = 0; i < arr.length; ++i) {
             result[arr[i]] = true;
         }
         return result;
     } //}}}
     function notEmpty(obj) { //{{{
         return Object.keys(obj).length !== 0;
-    }//}}}
+    } //}}}
     var xmlEntities = { //{{{
         amp: "&",
         quot: "\"",
         nbsp: "\xa0",
     }; //}}}
     function jmlFilterWs(jml) { //{{{
-        if(typeof jml === "string") {
+        if (typeof jml === "string") {
             return jml.trim();
-        } else if(Array.isArray(jml)) {
-            return jml.map(jmlFilterWs).filter(function(s) { return s !== ""; });
+        } else if (Array.isArray(jml)) {
+            return jml.map(jmlFilterWs).filter(function(s) {
+                return s !== "";
+            });
         } else {
             return jml;
         }
     } //}}}
     function strToJml(str) { //{{{
         var errors = [];
+
         function JsonML_Error(str) {
             errors.push(str);
         }
-        if(typeof(str) !== "string") {
+        if (typeof(str) !== "string") {
             throw "parameter must be string"
         }
-    
+
         /** white space definition */
         var whitespace = " \n\r\t";
         /** the current char in the string that is being parsed */
@@ -113,28 +126,32 @@
         /** Current tag being parsed */
         var tag = [];
         /** read the next char from the string */
-        function next_char() { c = ++pos < str.length ? str[pos] : undefined; }
+        function next_char() {
+            c = ++pos < str.length ? str[pos] : undefined;
+        }
         /** check if the current char is one of those in the string parameter */
-        function is_a(str) { return str.indexOf(c) !== -1; }
+        function is_a(str) {
+            return str.indexOf(c) !== -1;
+        }
         /** return the string from the current position to right before the first
          * occurence of any of symb. Translate escaped xml entities to their value
          * on the fly.
          */
         function read_until(symb) {
             var result = "";
-            while(c && !is_a(symb)) {
-                if(c === '&') {
+            while (c && !is_a(symb)) {
+                if (c === '&') {
                     next_char();
                     var entity = read_until(';');
-                    if(entity[0] === '#') {
-                        if(entity[1] === 'x') {
+                    if (entity[0] === '#') {
+                        if (entity[1] === 'x') {
                             c = String.fromCharCode(parseInt(entity.slice(2), 16));
                         } else {
                             c = String.fromCharCode(parseInt(entity.slice(1), 10));
                         }
                     } else {
                         c = xmlEntities[entity];
-                        if(!c) {
+                        if (!c) {
                             JsonML_Error("error: unrecognisable xml entity: " + entity);
                         }
                     }
@@ -144,51 +161,62 @@
             }
             return result
         }
-    
+
         // The actual parsing
-        while(is_a(whitespace)) { next_char(); }
-        while(c) {
-            if(is_a("<")) {
+        while (is_a(whitespace)) {
+            next_char();
+        }
+        while (c) {
+            if (is_a("<")) {
                 next_char();
-    
+
                 // `<?xml ... >`, `<!-- -->` or similar - skip these
-                if(is_a("?!")) {
-                    if(str.slice(pos, pos+3) === "!--") {
+                if (is_a("?!")) {
+                    if (str.slice(pos, pos + 3) === "!--") {
                         pos += 3;
-                        while(pos <= str.length && str.slice(pos, pos+2) !== "--") {
+                        while (pos <= str.length && str.slice(pos, pos + 2) !== "--") {
                             ++pos;
                         }
                     }
                     read_until('>');
                     next_char();
-    
-                // `<sometag ...>` - handle begin tag
-                } else if(!is_a("/")) {
+
+                    // `<sometag ...>` - handle begin tag
+                } else if (!is_a("/")) {
                     // read tag name
-                    var newtag = [read_until(whitespace+">/")];
-    
+                    var newtag = [read_until(whitespace + ">/")];
+
                     // read attributes
                     var attributes = {};
-                    while(c && is_a(whitespace)) { next_char(); }
-                    while(c && !is_a(">/")) {
+                    while (c && is_a(whitespace)) {
+                        next_char();
+                    }
+                    while (c && !is_a(">/")) {
                         var attr = read_until(whitespace + "=>");
-                        if(c === "=") {
+                        if (c === "=") {
                             next_char();
-                            var value_terminator = whitespace+">/";
-                            if(is_a('"\'')) { value_terminator = c; next_char(); }
+                            var value_terminator = whitespace + ">/";
+                            if (is_a('"\'')) {
+                                value_terminator = c;
+                                next_char();
+                            }
                             attributes[attr] = read_until(value_terminator);
-                            if(is_a('"\'')) { next_char(); }
+                            if (is_a('"\'')) {
+                                next_char();
+                            }
                         } else {
                             JsonML_Error("something not attribute in tag");
                         }
-                        while(c && is_a(whitespace)) { next_char(); }
+                        while (c && is_a(whitespace)) {
+                            next_char();
+                        }
                     }
                     newtag.push(attributes);
-    
+
                     // end of tag, is it `<.../>` or `<...>`
-                    if(is_a("/")) {
+                    if (is_a("/")) {
                         next_char();
-                        if(!is_a(">")) {
+                        if (!is_a(">")) {
                             JsonML_Error('expected ">" after "/" within tag');
                         }
                         tag.push(newtag);
@@ -197,57 +225,59 @@
                         tag = newtag;
                     }
                     next_char();
-    
-                // `</something>` - handle end tag
+
+                    // `</something>` - handle end tag
                 } else {
                     next_char();
-                    if(read_until(">") !== tag[0]) {
+                    if (read_until(">") !== tag[0]) {
                         JsonML_Error("end tag not matching: " + tag[0]);
                     }
                     next_char();
                     var parent_tag = stack.pop();
-                    if(tag.length <= 2 && !Array.isArray(tag[1]) && typeof(tag[1]) !== "string") {
+                    if (tag.length <= 2 && !Array.isArray(tag[1]) && typeof(tag[1]) !== "string") {
                         tag.push("");
                     }
                     parent_tag.push(tag);
                     tag = parent_tag;
-    
+
                 }
-    
-            // actual content / data between tags
+
+                // actual content / data between tags
             } else {
                 tag.push(read_until("<"));
             }
         }
-        if(errors.length) {
+        if (errors.length) {
             console.log(errors);
         }
         return tag;
     } //}}}
-    function jmlTrimmedTexts(data) {//{{{
-        if(typeof data === "string") {
+    function jmlTrimmedTexts(data) { //{{{
+        if (typeof data === "string") {
             return data.trim();
-        } else if(Array.isArray(data)) {
-            return data.slice(2).map(jmlTrimmedTexts).filter(function(a) { return a !== ""; }).reduce(function(a,b) { 
-                if(Array.isArray(b)) { 
+        } else if (Array.isArray(data)) {
+            return data.slice(2).map(jmlTrimmedTexts).filter(function(a) {
+                return a !== "";
+            }).reduce(function(a, b) {
+                if (Array.isArray(b)) {
                     return a.concat(b);
                 } else {
-                    a.push(b); 
-                    return a; 
+                    a.push(b);
+                    return a;
                 }
             }, []);
         } else {
             return "";
         }
-    }//}}}
-        function urlUnescape(str) { //{{{
-            return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
-                return String.fromCharCode(parseInt(code.slice(1), 16));
-            });
-        } //}}}
-    function values(obj) {//{{{
+    } //}}}
+    function urlUnescape(str) { //{{{
+        return str.replace(/\+/g, " ").replace(/%[0-9a-fA-F][0-9a-fA-F]/g, function(code) {
+            return String.fromCharCode(parseInt(code.slice(1), 16));
+        });
+    } //}}}
+    function values(obj) { //{{{
         var result = [];
-        for(var key in obj) {
+        for (var key in obj) {
             result.push(obj[key]);
         }
         return result;
@@ -257,7 +287,7 @@
         return d.getDate() + "/" + (d.getMonth() + 1);
     } //}}}
     function formatDateOrTime(n) { //{{{
-        if(Date.now() - n < 22*60*60*1000) {
+        if (Date.now() - n < 22 * 60 * 60 * 1000) {
             var d = new Date(n);
             return "i dag " + d.getHours() + ":" + String(100 + d.getMinutes()).slice(1);
         } else {
@@ -265,63 +295,61 @@
         }
     } //}}}
     function jmlToDom(jml) { //{{{
-        if(Array.isArray(jml)) {
+        if (Array.isArray(jml)) {
             var children;
             var classes = jml[0].split(".");
             var name = classes[0];
             classes = classes.slice(1);
             var attr = jml[1];
             var pos = 1;
-            if(typeof attr === "object" && attr.constructor === Object) {
+            if (typeof attr === "object" && attr.constructor === Object) {
                 ++pos;
                 attr = attr;
             } else {
                 attr = {};
             }
-            if(classes.length) {
+            if (classes.length) {
                 attr["class"] = classes.join(" ");
             }
             var elem = document.createElement(name);
-            for(var prop in attr) {
+            for (var prop in attr) {
                 elem.setAttribute(prop, attr[prop]);
             }
-            while(pos < jml.length) {
-                if(jml[pos]) {
+            while (pos < jml.length) {
+                if (jml[pos]) {
                     elem.appendChild(jmlToDom(jml[pos]));
-                }
-                ++pos;
+                }++pos;
             }
             return elem;
-        } else if(typeof jml === "string" || typeof jml === "number") {
+        } else if (typeof jml === "string" || typeof jml === "number") {
             return document.createTextNode(jml);
         } else {
             return jml;
         }
     } //}}}
     function jmlToStr(jml) { //{{{
-        if(Array.isArray(jml)) {
+        if (Array.isArray(jml)) {
             var children;
             var classes = jml[0].split(".");
             var name = classes[0];
             classes = classes.slice(1);
             var attr = jml[1];
             var pos = 1;
-            if(typeof attr === "object" && attr.constructor === Object) {
+            if (typeof attr === "object" && attr.constructor === Object) {
                 children = jml.slice(2);
                 attr = attr;
             } else {
                 children = jml.slice(1);
                 attr = {};
             }
-            if(classes.length) {
+            if (classes.length) {
                 attr["class"] = classes.join(" ");
             }
-            var result = "<" + name +
-                Object.keys(attr).map(function(key) {
-                    return " " + key + "=\"" + attr[key] + "\"";
-                }).join("");
+            var result = "<" + name + Object.keys(attr).map(function(key) {
+                return " " + key + "=\"" + attr[key] + "\"";
+            }).join("");
 
-            if(children.length === 0) {
+            if (children.length === 0) {
                 result += "/>";
             } else {
                 result += ">";
@@ -352,10 +380,10 @@
     DomProcess.prototype.css = function(style) { //{{{
         this.bind(function(dom) {
             var styleObj = dom.style;
-            for(var prop in style) {
+            for (var prop in style) {
                 var val = style[prop];
-                if(typeof val === "number") {
-                    val = (val |0)  + "px";
+                if (typeof val === "number") {
+                    val = (val | 0) + "px";
                 }
                 styleObj[prop] = val;
             }
@@ -365,7 +393,7 @@
     DomProcess.prototype.on = function(event, fn) { //{{{
         this.bind(function(dom) {
             var evs = event.split(" ");
-            for(var i = 0; i < evs.length; ++i) {
+            for (var i = 0; i < evs.length; ++i) {
                 dom["on" + evs[i]] = fn;
             }
         });
@@ -377,20 +405,20 @@
     } //}}}
     function domRecursiveApply(domNode, table) { //{{{
         var classes = domNode.classList;
-        if(classes) {
-            for(var i = 0; i < classes.length; ++i) {
+        if (classes) {
+            for (var i = 0; i < classes.length; ++i) {
                 var entry = table[classes[i]];
-                if(entry) {
+                if (entry) {
                     entry.apply(domNode);
                 }
             }
         }
-        if(table["default"]) {
+        if (table["default"]) {
             table["default"].apply(domNode);
         }
 
         var children = domNode.children;
-        for(i=0; i<children.length; ++i) {
+        for (i = 0; i < children.length; ++i) {
             domRecursiveApply(children[i], table);
         }
     } //}}}
@@ -399,16 +427,18 @@
         // Sample items {{{
         var sampleEvent = {
             date: 1356706097976,
-            title: "Nytårskursus", 
+            title: "Nytårskursus",
             description: "Kursus om ...",
             url: "http://bibilitek.example.com/foo/bar...html",
-            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"};
+            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"
+        };
         var sampleNews = {
             date: 1356706097976,
             title: "Glædeligt nytår",
             description: "starten af en artikel ....",
             url: "http://bibilitek.example.com/foo/bar...html",
-            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"};
+            thumbUrl: "http://bibliotek.example.com/foo/bar...jpg"
+        };
         var sampleSearchResult = {
             id: "830318:48781321",
             title: "Samlede Eventyr",
@@ -416,13 +446,15 @@
             type: "book",
             thumbUrl: "http://bibliotek.example.com/foo/bar...",
             description: "Samling af eventyr der ... og så også ... blah blah blah blah blah...",
-            status: "available"}; //}}}
+            status: "available"
+        }; //}}}
         var content = { //{{{
             lastSync: 1356706097976,
             calendar: [sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent, sampleEvent],
-            news: [sampleNews, sampleNews, sampleNews, sampleNews, sampleNews, sampleNews]}; //}}}
+            news: [sampleNews, sampleNews, sampleNews, sampleNews, sampleNews, sampleNews]
+        }; //}}}
         var cache = { //{{{
-           materials: {
+            materials: {
                 "830318:48781321": {
                     lastSync: 1356706097976,
                     id: "830318:48781321",
@@ -440,9 +472,10 @@
                     publisher: "Hans Reitzel",
                     "længde": "1029 sider ",
                     status: "available"
-                }},
-            searches: {
-            }}; //}}}
+                }
+            },
+            searches: {}
+        }; //}}}
         var patron = { //{{{
             lastSync: Date.now(),
             name: "Joe User",
@@ -451,14 +484,17 @@
                     expireDate: 1357706097976,
                     id: "830318:48781323",
                     title: "Some title 1",
-                    creator: "Some author"},
+                    creator: "Some author"
+                },
                 "730318:48781321": {
                     expireDate: 1356706097976,
                     id: "830318:48781321",
                     title: "Some title 2",
                     creator: "Some author 2",
                     // set renewRequest if we have requested a renew
-                    renewRequest: true }},
+                    renewRequest: true
+                }
+            },
             reservations: {
                 "830138:48321421": {
                     expireDate: 1356706097976,
@@ -468,7 +504,8 @@
                     creator: "Some author",
                     // set deleteRequest if we want to delete the reservation
                     deleteRequest: true
-                }},
+                }
+            },
             arrived: {
                 "730318:48781321": {
                     expireDate: 1356706097976,
@@ -480,7 +517,9 @@
                     deleteRequest: true,
                     // info about arrival if arrived
                     location: "7/1 nr.\xa032 Husum"
-                }} }; //}}}
+                }
+            }
+        }; //}}}
         return { //{{{
             content: content,
             cache: cache,
@@ -488,7 +527,7 @@
         };
     })(); //}}}
     function searchResults(query) { //{{{
-        if(data.cache.searches[query]) {
+        if (data.cache.searches[query]) {
             return data.cache.searches[query].results;
         } else {
             return [];
@@ -497,9 +536,10 @@
     // Views {{{1
     function genStyles(width, height) { //{{{
         var margin = (width / 40) & ~1;
-        var unit = ((width - 7 * margin)/6) | 0;
+        var unit = ((width - 7 * margin) / 6) | 0;
         var margin0 = (width - 7 * margin - unit * 6) >> 1;
         var smallFont = unit * 0.4;
+
         function wn(n) { //{{{
             return css({
                 verticalAlign: "middle",
@@ -508,7 +548,7 @@
                 paddingRight: 0,
                 marginLeft: margin,
                 marginRight: 0,
-                width: unit * n + margin * (n-1),
+                width: unit * n + margin * (n - 1),
                 display: "inline-block"
                 //boxShadow: "1px 1px 4px rgba(0,0,0,1)"
             });
@@ -516,7 +556,7 @@
         var result = { //{{{
             "default": (new DomProcess()).bind(function(dom) {
                 (function(href) {
-                    if(href && href[0] === "/") {
+                    if (href && href[0] === "/") {
                         dom.removeAttribute("href");
                         dom.onclick = function() {
                             go(href.slice(1));
@@ -536,8 +576,7 @@
                 //textAlign: "center",
                 height: unit
             }),
-            homeButton: css({
-            }).on("click mousedown touch", function() {
+            homeButton: css({}).on("click mousedown touch", function() {
                 go("home");
             }),
             patronWidget: css({
@@ -551,18 +590,18 @@
             }),
             content: css({
                 position: "relative",
-                top: unit+margin,
+                top: unit + margin,
                 left: 0,
                 width: width
             }),
             icon: css({
-                top: 0.05 *unit - 1,
+                top: 0.05 * unit - 1,
                 left: 0,
                 width: unit - 2,
                 display: "inline-block",
                 position: "relative",
-                paddingTop: 0.15 * unit, 
-                paddingBottom: 0.15 * unit, 
+                paddingTop: 0.15 * unit,
+                paddingBottom: 0.15 * unit,
                 border: "1px outset",
                 borderRadius: margin,
                 textAlign: "center",
@@ -589,7 +628,8 @@
                 paddingLeft: 0,
                 marginTop: 0,
                 overflow: "hidden",
-                height: unit+margin * 1, width: width,
+                height: unit + margin * 1,
+                width: width,
                 background: "rgba(0, 0, 32, .8)",
                 boxShadow: "0px 0px " + unit + "px rgba(32,32,0,1)",
                 color: "#ffc",
@@ -597,7 +637,7 @@
             }),
             largeWidget: css({
                 marginTop: margin,
-                height: (height - unit * 3 - margin * 6) >>1,
+                height: (height - unit * 3 - margin * 6) >> 1,
                 marginLeft: margin,
                 marginRight: margin,
                 overflow: "hidden"
@@ -620,7 +660,8 @@
 
             }),
             searchButton: css({
-                height: unit, width: unit
+                height: unit,
+                width: unit
             }).on("click mousedown touch", function() {
                 var query = document.getElementsByClassName("searchInput")[0].value;
                 go("search/" + query);
@@ -631,12 +672,18 @@
             searchResult: css({
                 marginTop: margin,
                 height: 1.618 * unit,
-                 //boxShadow: "1px 1px 4px rgba(0,0,0,1)",
+                //boxShadow: "1px 1px 4px rgba(0,0,0,1)",
                 overflow: "hidden"
             }),
-            headerPadding: css({ height: unit+margin }),
-            w1: wn(1), w2: wn(2), w3: wn(3),
-            w4: wn(4), w5: wn(5), w6: wn(6),
+            headerPadding: css({
+                height: unit + margin
+            }),
+            w1: wn(1),
+            w2: wn(2),
+            w3: wn(3),
+            w4: wn(4),
+            w5: wn(5),
+            w6: wn(6),
             searchInput: css({
                 width: "100%",
                 textAlign: "center",
@@ -646,10 +693,7 @@
                 fontSize: smallFont,
                 border: "none",
                 backgrund: "rgba(255,255,255,0.4)",
-                boxShadow: "0px -1px 2px rgba(0,0,0,1)," +
-                           "-1px 0px 2px rgba(0,0,0,1)," +
-                            "0px 1px 2px rgba(255,255,255,1)," +
-                            "1px 0px 2px rgba(255,255,255,1)" ,
+                boxShadow: "0px -1px 2px rgba(0,0,0,1)," + "-1px 0px 2px rgba(0,0,0,1)," + "0px 1px 2px rgba(255,255,255,1)," + "1px 0px 2px rgba(255,255,255,1)",
                 borderRadius: margin
             }).on("submit search", function() {
                 var query = document.getElementsByClassName("searchInput")[0].value;
@@ -668,9 +712,8 @@
         }; //}}}
         return result;
     } //}}}
-    var cache = {
-    }
-    if(isClient) {
+    var cache = {}
+    if (isClient) {
         window.cache = cache;
     }
     // Layout {{{
@@ -678,16 +721,18 @@
         function patronWidgetContent() { //{{{
             // Vis lånerstatus hvis logget ind, samt synkroniseret indenfor
             // det sidste halve døgn.
-            if(data.patron && data.patron.lastSync > Date.now() - 12*60*60*1000) {
+            if (data.patron && data.patron.lastSync > Date.now() - 12 * 60 * 60 * 1000) {
                 var result = "";
 
                 // Vis antal lån, og hvornår næste aflevering.
                 var loans = values(data.patron.loans);
-                if(loans.length) {
+                if (loans.length) {
                     result += loans.length + "\xa0lån. ";
                     result += "Aflever\xa0";
-                    var nextTime = Math.min.apply(Math, loans.map(function(loan) { return loan.expireDate; }));
-                    if(nextTime < Date.now()) {
+                    var nextTime = Math.min.apply(Math, loans.map(function(loan) {
+                        return loan.expireDate;
+                    }));
+                    if (nextTime < Date.now()) {
                         result += "nu. ";
                     } else {
                         result += formatDate(nextTime) + " ";
@@ -695,13 +740,13 @@
                 } else {
                     result += "Ingen\xa0lån";
                 }
-    
+
                 // Vis antal hjemkomne, eller reservationsstatus
                 var arrived = values(data.patron.arrived);
                 var reservations = values(data.patron.reservations);
-                if(arrived.length) {
+                if (arrived.length) {
                     result += arrived.length + "\xa0" + (arrived.length === 1 ? "hjemkommet" : "hjemkomne");
-                } else if(reservations.length) {
+                } else if (reservations.length) {
                     result += reservations.length + "\xa0reservationer";
                 }
                 return result;
@@ -719,44 +764,64 @@
                 return ["div.widgetItem", ["span.widgetDate", formatDate(event.date)], " ", event.title];
             });
         } //}}}
-        arg.callback({jml: ["div.page.frontPage",  //{{{
-                ["div.header", 
-                    ["div.searchLine.w5.line", 
-                        ["input.searchInput", {placeholder: "søg", type: "search"}]],
+        arg.callback({
+            jml: ["div.page.frontPage", //{{{
+                ["div.header",
+                    ["div.searchLine.w5.line",
+                        ["input.searchInput", {
+                placeholder: "søg",
+                type: "search"
+            }]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
                 ["div.content",
                     ["div.biblogo.pageHeading.w6", "Demo Bibliotek"],
                     ["div.w6.line", ["div.patronWidget", patronWidgetContent()]],
-                    ["div.largeWidget.newsWidget.w6", 
+                    ["div.largeWidget.newsWidget.w6",
                         ["div.widgetTitle", "Nyheder"]].concat(newsWidgetContent()),
-                    ["div.largeWidget.calendarWidget.w6", 
-                        ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]]});  //}}}
+                    ["div.largeWidget.calendarWidget.w6",
+                        ["div.widgetTitle", "Kalender"]].concat(calendarWidgetContent())]]
+        }); //}}}
     } //}}}
     function resultsPage(opt) { //{{{
         var query = opt.path;
         var id = uniqId();
+
         function deliverResultsPage(results) {
-            opt.callback({jml: ["div.page.searchResults", //{{{
-                ["div.header", 
+            opt.callback({
+                jml: ["div.page.searchResults", //{{{
+                ["div.header",
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
-                    ["div.searchLine.w4.line", 
-                        ["input.searchInput", {value: query, type: "search"}]],
+                    ["div.searchLine.w4.line",
+                        ["input.searchInput", {
+                    value: query,
+                    type: "search"
+                }]],
                     ["span.searchButton.w1.line", ["span.icon.icon-search", ""]]],
-                ["div.content", {id: id}].concat(results)]}); //}}}
+                ["div.content", {
+                    id: id
+                }].concat(results)]
+            }); //}}}
         }
-        rpcCall("BibDataSearch", {query: query, page: 0}, function(err, data) {
+        rpcCall("BibDataSearch", {
+            query: query,
+            page: 0
+        }, function(err, data) {
             // id, isCollection, coverUrl, title, creator, date, subject, abstract 
-            if(err) {
+            if (err) {
                 // TODO: handle errors in ui
                 throw err;
             }
 
             // Cache result
-            cache["search:" + 0 + ":" + query] = { cached: Date.now(),
-                results: data.map(function(entry) { return entry.id; })};
+            cache["search:" + 0 + ":" + query] = {
+                cached: Date.now(),
+                results: data.map(function(entry) {
+                    return entry.id;
+                })
+            };
             data.forEach(function(entry) {
                 var cacheEntry = cache["entry:" + entry.id];
-                if(!cacheEntry) {
+                if (!cacheEntry) {
                     cache["entry:" + entry.id] = cacheEntry = entry;
                 }
                 cacheEntry.cached = Date.now();
@@ -765,29 +830,46 @@
             console.log(data);
             var result = data.map(function(entry) {
                 return ["div", {
-                            "xmlns:dc": "http://purl.org/dc/elements/1.1/",
-                            itemscope: "itemscope",
-                            itemtype: "http://schema.org/CreativeWork",
-                            about: "http://bibdata.dk/work/" + entry.id},
-                    ["meta", {itemprop: "url", content: "http://bibdata.dk/work/" + entry.id}],
-                    ["a.searchResult.w1.go",
-                        {href: "/work/" + entry.id},
-                        ["img.resultImg", {src: entry.coverUrl}]],
-                    ["a.div.searchResult.w4.go", {href: "/work/" + entry.id},
-                        ["div.resultTitle.resultLine", 
-                            {property: "dc:title", itemprop: "name"}, 
+                    "xmlns:dc": "http://purl.org/dc/elements/1.1/",
+                    itemscope: "itemscope",
+                    itemtype: "http://schema.org/CreativeWork",
+                    about: "http://bibdata.dk/work/" + entry.id
+                }, ["meta", {
+                    itemprop: "url",
+                    content: "http://bibdata.dk/work/" + entry.id
+                }], ["a.searchResult.w1.go",
+                        {
+                    href: "/work/" + entry.id
+                },
+                        ["img.resultImg", {
+                    src: entry.coverUrl
+                }]], ["a.div.searchResult.w4.go", {
+                    href: "/work/" + entry.id
+                },
+                        ["div.resultTitle.resultLine",
+                            {
+                    property: "dc:title",
+                    itemprop: "name"
+                },
                             entry.title],
-                        ["div.resultCreator.resultLine", 
-                            {property: "dc:creator", itemprop: "creator"}, 
+                        ["div.resultCreator.resultLine",
+                            {
+                    property: "dc:creator",
+                    itemprop: "creator"
+                },
                              entry.creator],
-                        ["div.resultDescription.resultLine", 
-                            {property: "dc:description", name: "description"}, 
-                            entry.description || (entry.subject || []).join(" ")]],
-                    ["a.orderButton.w1.line.go", 
-                        {href: ("/order/" + entry.id)}, 
+                        ["div.resultDescription.resultLine",
+                            {
+                    property: "dc:description",
+                    name: "description"
+                },
+                            entry.description || (entry.subject || []).join(" ")]], ["a.orderButton.w1.line.go",
+                        {
+                    href: ("/order/" + entry.id)
+                },
                         ["span.icon.icon-shopping-cart", ""]]];
             });
-            if(isClient) {
+            if (isClient) {
                 var styles = genStyles(window.innerWidth, window.innerHeight);
                 var elem = document.getElementById(id);
                 result.forEach(function(jml) {
@@ -799,134 +881,197 @@
                 deliverResultsPage(result);
             }
         });
-        if(isClient) {
+        if (isClient) {
             deliverResultsPage([]);
-        } 
+        }
     } //}}}
-    function landingPage(opt) {//{{{
-        opt.callback({jml:["div", 
+    function landingPage(opt) { //{{{
+        opt.callback({
+            jml: ["div",
             ["h1", "BibData"],
             ["div", "Eksperimenter med biblioteksapps og biblioteksdata."],
             ["ul",
-                ["li", ["a", {href:"/home"}, ["button", "Mobil html5 app-prototype."]]],
-                ["li", ["a", {href:"/desktopbrowser"}, ["button", "...in frame for desktop test"]]]]
-        ]}); 
-    }//}}}
-    function desktopBrowser(opt) {//{{{
-        opt.callback({jml:["div", 
+                ["li", ["a", {
+                href: "/home"
+            }, ["button", "Mobil html5 app-prototype."]]],
+                ["li", ["a", {
+                href: "/desktopbrowser"
+            }, ["button", "...in frame for desktop test"]]]]
+        ]
+        });
+    } //}}}
+    function desktopBrowser(opt) { //{{{
+        opt.callback({
+            jml: ["div",
             ["h1", "BibData"],
-            ["div", {style: "text-align: center"},
-            ["iframe", {src:"/home", width:320, height: 480}, ""]]]});
-    }//}}}
-    function loginPage(opt) {//{{{
-        opt.callback({jml:["div.page.login", 
+            ["div", {
+                style: "text-align: center"
+            },
+            ["iframe", {
+                src: "/home",
+                width: 320,
+                height: 480
+            }, ""]]]
+        });
+    } //}}}
+    function loginPage(opt) { //{{{
+        opt.callback({
+            jml: ["div.page.login",
                 ["span.w6.spacing.largeWidget", ""],
                 ["div.w2.right", "Brugerid:"],
                 ["input.w4.line", ""],
                 ["div.w2.right", "Kodeord:"],
-                ["input.w4.line", {type: "password"}, ""],
+                ["input.w4.line", {
+                type: "password"
+            }, ""],
                 ["span.w2.spacing", ""],
                 ["div.w2.line.button", "Annuller"],
                 ["div.w2.line.button", "Log ind"],
-                ["span.w6.spacing.largeWidget", ""]]}); 
-    }//}}}
+                ["span.w6.spacing.largeWidget", ""]]
+        });
+    } //}}}
     function patronPage(opt) { //{{{
         var content = ["div.content"];
 
         function arrivedEntry(entry) {
-            return ["div",
-                ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator],
-                ["div.w2.renewAll.line", entry.location]];
+            return ["div", ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator], ["div.w2.renewAll.line", entry.location]];
         }
+
         function loanEntry(entry) {
-            return ["div",
-                ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator],
-                ["span.w1.date.line", {style: (entry.expireDate < Date.now()? "background: red" : "")}, formatDate(entry.expireDate)], 
-                ["div.w1.renewAll.line", "Forny"]];
+            return ["div", ["span.w4.spacing.bookentry.line", entry.title, ["br"], entry.creator], ["span.w1.date.line", {
+                style: (entry.expireDate < Date.now() ? "background: red" : "")
+            }, formatDate(entry.expireDate)], ["div.w1.renewAll.line", "Forny"]];
         }
+
         function reservationEntry(entry) {
-            return ["div",
-                ["span.w5.spacing.bookentry.line", entry.title, ["br"], entry.creator],
-                ["div.w1.renewAll.line", "Slet"]];
+            return ["div", ["span.w5.spacing.bookentry.line", entry.title, ["br"], entry.creator], ["div.w1.renewAll.line", "Slet"]];
         }
 
         var arrived = values(data.patron.arrived);
-        if(arrived.length) {
+        if (arrived.length) {
             content.push(["div.w6.pageHeading.patronHeading", "Hjemkomne:"]);
             content = content.concat(arrived.map(arrivedEntry));
         }
 
         var loans = values(data.patron.loans);
-        if(loans.length === 0) {
+        if (loans.length === 0) {
             content.push(["div.w6.pageHeading.patronHeading", "Ingen hjemlån"]);
         }
-        if(loans.length) {
-            loans.sort(function(a, b) { return a.expireDate - b.expireDate; });
+        if (loans.length) {
+            loans.sort(function(a, b) {
+                return a.expireDate - b.expireDate;
+            });
             content.push(["div.w5.pageHeading.patronHeading", "Lån:"]);
             content.push(["div.w1.line.renewAll", "Forny alle"]);
             content = content.concat(loans.map(loanEntry));
         }
 
         var reservations = values(data.patron.reservations);
-        if(reservations.length) {
+        if (reservations.length) {
             content.push(["div.w6.patronHeading", "Reservationer:"]);
             content = content.concat(reservations.map(reservationEntry));
         }
 
-        opt.callback({jml:["div.page.patronInfo", 
-                ["div.header", 
+        opt.callback({
+            jml: ["div.page.patronInfo",
+                ["div.header",
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", data.patron.name, ["br"], "Opdateret ", formatDateOrTime(data.patron.lastSync)],
                     ["span.signoutButton.w1.line", ["span.icon.icon-signout", ""]]],
-                content]});
-    }//}}}
+                content]
+        });
+    } //}}}
     function bibEntryPage(opt) { //{{{
         function bibEntryContent(entry) {
             entry.subject = entry.subject || [];
             console.log("type:", entry.details && entry.details["Type"]);
             var typeMap = {
-                "Avisartikel": {schema: "Article"},
-                "Tidsskriftsartikel": {schema: "Article"},
-                "Film (net)": {schema: "Movie"},
-                "Bog": {schema: "Book"},
-                "undefined": {schema: "CreativeWork"},
+                "Avisartikel": {
+                    schema: "Article"
+                },
+                "Tidsskriftsartikel": {
+                    schema: "Article"
+                },
+                "Film (net)": {
+                    schema: "Movie"
+                },
+                "Bog": {
+                    schema: "Book"
+                },
+                "undefined": {
+                    schema: "CreativeWork"
+                },
             };
             var itemType = typeMap[entry.details && entry.details["Type"][0]] || typeMap["undefined"];
             var detailMap = {
-                "Emner": {schema: "keywords", rdf: "dc:subject"},
-                "Emneord": {schema: "keywords", rdf: "dc:subject"},
-                "Sprog": {schema: "inLanguage", rdf: "dc:language"},
-                "ISBN": {schema: "isbn"},
+                "Emner": {
+                    schema: "keywords",
+                    rdf: "dc:subject"
+                },
+                "Emneord": {
+                    schema: "keywords",
+                    rdf: "dc:subject"
+                },
+                "Sprog": {
+                    schema: "inLanguage",
+                    rdf: "dc:language"
+                },
+                "ISBN": {
+                    schema: "isbn"
+                },
             };
-            return [["div.header", 
+            return [["div.header",
                     ["span.homeButton.w1.line", ["span.icon.icon-home", ""]],
                     ["span.patronStatus.w4.line", entry.title, ["em", " af "], " " + entry.creator],
-                    ["span.backButton.w1.line", {onclick: "history.back()"}, ["span.icon.icon-arrow-left", ""]]],
-                ["div.content", {
-                        "xmlns:dc": "http://purl.org/dc/elements/1.1/",
-                        itemscope: "itemscope",
-                        itemtype: "http://schema.org/" + itemType.schema,
-                        about: "http://bibdata.dk/work/" + opt.path,
-                    },
-                    ["meta", {itemprop: "url", content: "http://bibdata.dk/work/" + entry.id}],
-                    ["img.w2.coverUrl", {src: entry.coverUrl || "/static/defaultCover.jpg"}],
+                    ["span.backButton.w1.line", {
+                onclick: "history.back()"
+            }, ["span.icon.icon-arrow-left", ""]]], ["div.content", {
+                "xmlns:dc": "http://purl.org/dc/elements/1.1/",
+                itemscope: "itemscope",
+                itemtype: "http://schema.org/" + itemType.schema,
+                about: "http://bibdata.dk/work/" + opt.path,
+            },
+                    ["meta", {
+                itemprop: "url",
+                content: "http://bibdata.dk/work/" + entry.id
+            }],
+                    ["img.w2.coverUrl", {
+                src: entry.coverUrl || "/static/defaultCover.jpg"
+            }],
                     ["div.w4",
-                        ["div", {property: "dc:title", itemprop: "name"}, entry.title],
-                        ["div", {property: "dc:date", itemprop: "datePublished"}, entry.date],
-                        ["div", {property: "dc:creator", itemprop: "creator"}, entry.creator]],
-                    ["div.w6", {property: "dc:description", itemprop: "description"}, entry.description],
+                        ["div", {
+                property: "dc:title",
+                itemprop: "name"
+            }, entry.title],
+                        ["div", {
+                property: "dc:date",
+                itemprop: "datePublished"
+            }, entry.date],
+                        ["div", {
+                property: "dc:creator",
+                itemprop: "creator"
+            }, entry.creator]],
+                    ["div.w6", {
+                property: "dc:description",
+                itemprop: "description"
+            }, entry.description],
                     ["br"], ["br"],
-                    ["div"].concat(entry.details ? 
-                        Object.keys(entry.details).map(function(key) {
-                            var metaattr = {};
-                            var semInfo = detailMap[key];
-                            if(semInfo) {
-                                if(semInfo.schema) { metaattr.itemprop = semInfo.schema; }
-                                if(semInfo.rdf) { metaattr.property = semInfo.rdf; }
-                            }
-                            return ["div", ["span.w3.right", key, ": "], ["span.w3", metaattr, entry.details[key].join(", ")]];
-                        }) :
-                        [["div", {property: "dc:subject", itemprop: "keywords"}, entry.subject.join(", ")]])]];
+                    ["div"].concat(entry.details ? Object.keys(entry.details).map(function(key) {
+                var metaattr = {};
+                var semInfo = detailMap[key];
+                if (semInfo) {
+                    if (semInfo.schema) {
+                        metaattr.itemprop = semInfo.schema;
+                    }
+                    if (semInfo.rdf) {
+                        metaattr.property = semInfo.rdf;
+                    }
+                }
+                return ["div", ["span.w3.right", key, ": "], ["span.w3", metaattr, entry.details[key].join(", ")]];
+            }) : [["div", {
+                property: "dc:subject",
+                itemprop: "keywords"
+            }, entry.subject.join(", ")]])]];
         }
         console.log(opt);
         //opt.callback({jml:["div", "todo ", opt.path]});
@@ -935,32 +1080,44 @@
         });
         var cachedEntry = cache["entry:" + opt.path];
         console.log("cached:", cachedEntry);
-        if(isServer) {
+        if (isServer) {
             rpcCall("BibDataEntry", opt.path, function(err, data) {
-                if(err) {
-                    opt.callback({jml:["div.page", "error:", JSON.stringify(err)]});
+                if (err) {
+                    opt.callback({
+                        jml: ["div.page", "error:", JSON.stringify(err)]
+                    });
                 } else {
-                    opt.callback({jml:["div.page"].concat(bibEntryContent(data))});
+                    opt.callback({
+                        jml: ["div.page"].concat(bibEntryContent(data))
+                    });
                 }
             });
         } else {
             var id = uniqId();
-            if(cachedEntry) {
-                opt.callback({jml:["div.page", {id: id}].concat(bibEntryContent(cachedEntry))});
+            if (cachedEntry) {
+                opt.callback({
+                    jml: ["div.page", {
+                        id: id
+                    }].concat(bibEntryContent(cachedEntry))
+                });
             } else {
-                opt.callback({jml:["div.page", {id: id}]});
+                opt.callback({
+                    jml: ["div.page", {
+                        id: id
+                    }]
+                });
             }
             rpcCall("BibDataEntry", opt.path, function(err, data) {
-                if(err) {
+                if (err) {
                     // TODO: error handling
                 } else {
                     var elem = document.getElementById(id);
                     console.log(id, elem);
-                    while(elem.childNodes.length > 0) {
+                    while (elem.childNodes.length > 0) {
                         elem.removeChild(elem.childNodes[0]);
                     }
                     var content = bibEntryContent(data);
-                    for(var i = 0; i < content.length; ++i) {
+                    for (var i = 0; i < content.length; ++i) {
                         elem.appendChild(jmlToDom(content[i]));
                     }
                     domRecursiveApply(elem, genStyles(Math.min(window.innerHeight, window.innerWidth), window.innerHeight));
@@ -974,34 +1131,37 @@
     //}}}
     // Transitions {{{
     var view;
+
     function initView(page) {
         window.view = view = {};
         view.width = Math.min(window.innerHeight, window.innerWidth);
         view.height = window.innerHeight;
         view.current = jmlToDom(page);
         document.body.style.padding = document.body.style.margin = "0px";
-        while(document.body.childNodes.length) {
+        while (document.body.childNodes.length) {
             document.body.removeChild(document.body.childNodes[0]);
         }
         transition(page);
     }
+
     function posLeft() {
         return css({
             position: "absolute",
             height: view.height,
             width: view.width,
-            left: - view.width,
+            left: -view.width,
             top: 0
         });
     }
     var transitioning = false;
+
     function transition(page) {
-        window.scrollTo(0,0);
-        if(!view) {
+        window.scrollTo(0, 0);
+        if (!view) {
             initView(page);
             return;
         }
-        if(transitioning) {
+        if (transitioning) {
             return;
         }
         transitioning = true;
@@ -1032,11 +1192,11 @@
         }).apply(view.current);
         document.body.appendChild(view.current);
         window.setTimeout(function() {
-            style.left = - view.width + "px";
+            style.left = -view.width + "px";
             view.current.style.left = 0;
         }, 0);
         window.setTimeout(function() {
-            while(document.body.childNodes.length > 1) {
+            while (document.body.childNodes.length > 1) {
                 document.body.removeChild(document.body.childNodes[0]);
             }
             transitioning = false;
@@ -1071,8 +1231,8 @@
     //
     // 
     function go(name) {
-        if(window.history && window.history.pushState) {
-            name = "/" + name; 
+        if (window.history && window.history.pushState) {
+            name = "/" + name;
             window.history.pushState(name, name, name);
             goCurrent();
         } else {
@@ -1088,31 +1248,40 @@
     function jmlPage(opt) {
         var path = urlUnescape(opt.path);
         var splitPos = path.indexOf("/");
-        if(splitPos === -1) {
+        if (splitPos === -1) {
             splitPos = path.length;
         }
         var pageName = path.slice(0, splitPos);
         var pageArg = path.slice(splitPos + 1);
         var fn = urlTable[pageName];
-        if(fn) {
+        if (fn) {
             opt.path = pageArg;
         } else {
             fn = urlTable["default"];
         }
         fn(opt);
     }
-    if(isClient) { //{{{
+    if (isClient) { //{{{
         var switchInProgress = false;
         window.onpopstate = goCurrent;
         window.onhashchange = goCurrent;
         window.main = goCurrent;
     }
+
     function goCurrent() {
-        if(switchInProgress) { return; }
-        jmlPage({path: (location.hash || location.pathname).slice(1),
-            callback: function(data) { transition(jmlToDom(data.jml)); }});
+        if (switchInProgress) {
+            return;
+        }
+        jmlPage({
+            path: (location.hash || location.pathname).slice(1),
+            callback: function(data) {
+                transition(jmlToDom(data.jml));
+            }
+        });
         switchInProgress = true;
-        setTimeout(function() { switchInProgress = false; }, 100);
+        setTimeout(function() {
+            switchInProgress = false;
+        }, 100);
     } //}}}
     // Server {{{1
     // Scraper {{{
@@ -1122,16 +1291,17 @@
 
         var cacheName = id.replace(/[^a-zA-Z0-9]/g, "_");
         fs.readFile("cache/" + cacheName, "utf8", function(err, data) {
-            if(!err) {
+            if (!err) {
                 callback(undefined, data);
             } else {
                 downloadAndCache();
             }
         });
+
         function downloadAndCache() {
             console.log("http-get", id);
             request(id, function(err, res, data) {
-                if(err || res.statusCode !== 200) {
+                if (err || res.statusCode !== 200) {
                     console.log("got error", id);
                     callback(err || res);
                 } else {
@@ -1140,6 +1310,7 @@
                 }
             });
         }
+
         function handleDownload(data) {
             fs.writeFile("cache/" + cacheName, data);
             callback(undefined, data);
@@ -1152,7 +1323,7 @@
         getCacheOrUrl("http://bibliotek.kk.dk/ting/object/" + id, handleBibData);
 
         function handleBibData(err, data) { //{{{
-            if(err) {
+            if (err) {
                 callback(err);
             } else {
                 var result = parseBibData(strToJml(data));
@@ -1160,55 +1331,75 @@
                 callback(undefined, result);
             }
         } //}}}
-    function parseBibData(data) { //{{{
-        function set(name, val) { //{{{
-            if(!result[name]) { result[name] = []; }
-            if(val) { result[name].push(val); }
-        }//}}}
-        function extractData(data) { //{{{
-            function len3() { if(data.length !== 3) { warn("unexpected length", data); } }
-            if(Array.isArray(data)) {
-                var attr = data[1];
-                var classes = attr["class"] && arrayToSetObject(attr["class"].split(" ")) || {};
-                if(data[0] === "h2") { len3(); set("title", data[2]); }
-                if(classes["abstract"]) { len3(); set("description", data[2]); }
-                if(classes["date"]) { len3(); set("date", data[2]); }
-                if(classes["left-column"]) {
-                    if(data[3][1]["class"] !== "picture") { warn("expecting picture", data); };
-                    set("coverUrl", data[3][3][1]["src"]);
+        function parseBibData(data) { //{{{
+            function set(name, val) { //{{{
+                if (!result[name]) {
+                    result[name] = [];
                 }
-                attr["class"] && attr["class"].split(" ").forEach(function(cls) {
-                    if(cls.slice(0, 5) === "ting-") {
-                        if(cls === "ting-autocomplete") {
-                            return;
-                        }
-                        var content = data[2];
-                        var propName = cls.slice(5);
-                        if(typeof content === "string") {
-                            if(content.trim()) {
-                                set(propName, content);
-                            }
-                        } else {
-                            var dkProp = content[2][2];
-                            var val = jmlTrimmedTexts(content[3]);
-                            if(typeof dkProp === "string") {
-                                result[dkProp] = (result[dkProp] || []).concat(val);
-                            }
-                        }
+                if (val) {
+                    result[name].push(val);
+                }
+            } //}}}
+            function extractData(data) { //{{{
+                function len3() {
+                    if (data.length !== 3) {
+                        warn("unexpected length", data);
                     }
-                });
-                data.slice(2).forEach(extractData);
-            }
-        }//}}}
-        var result = {};
-        data.forEach(extractData);
-        return result;
-    } //}}}
+                }
+                if (Array.isArray(data)) {
+                    var attr = data[1];
+                    var classes = attr["class"] && arrayToSetObject(attr["class"].split(" ")) || {};
+                    if (data[0] === "h2") {
+                        len3();
+                        set("title", data[2]);
+                    }
+                    if (classes["abstract"]) {
+                        len3();
+                        set("description", data[2]);
+                    }
+                    if (classes["date"]) {
+                        len3();
+                        set("date", data[2]);
+                    }
+                    if (classes["left-column"]) {
+                        if (data[3][1]["class"] !== "picture") {
+                            warn("expecting picture", data);
+                        };
+                        set("coverUrl", data[3][3][1]["src"]);
+                    }
+                    attr["class"] && attr["class"].split(" ").forEach(function(cls) {
+                        if (cls.slice(0, 5) === "ting-") {
+                            if (cls === "ting-autocomplete") {
+                                return;
+                            }
+                            var content = data[2];
+                            var propName = cls.slice(5);
+                            if (typeof content === "string") {
+                                if (content.trim()) {
+                                    set(propName, content);
+                                }
+                            } else {
+                                var dkProp = content[2][2];
+                                var val = jmlTrimmedTexts(content[3]);
+                                if (typeof dkProp === "string") {
+                                    result[dkProp] = (result[dkProp] || []).concat(val);
+                                }
+                            }
+                        }
+                    });
+                    data.slice(2).forEach(extractData);
+                }
+            } //}}}
+            var result = {};
+            data.forEach(extractData);
+            return result;
+        } //}}}
     } //}}}
     function bibSearch(query, page, callback) { //{{{
         getCacheOrUrl("http://bibliotek.kk.dk/ting/search/js?page=" + (page + 1) + "&query=" + query, handleSearchData);
+
         function handleSearchData(err, data) {
-            if(err) {
+            if (err) {
                 callback(err);
             } else {
                 var json = JSON.parse(data);
@@ -1218,16 +1409,25 @@
                     result.id = url.replace(/.*\//, "").replace("%3A", ":");
                     result.isCollection = (url.indexOf("collection") !== -1);
                     result.coverUrl = entry[2][2][2][1]["src"];
+
                     function bibVisitor(elem) {
-                        if(Array.isArray(elem)) {
+                        if (Array.isArray(elem)) {
                             var cls = elem[1]["class"] || "";
-                            if(cls === "publication_date") { result.date = elem[3] ? elem[3][2] : elem[2]; };
-                            if(cls.slice(0, 13) === "ting-subjects" && typeof elem[2] === "string") { 
-                                result.subject = (result.subject||[]).concat([elem[2]]);
+                            if (cls === "publication_date") {
+                                result.date = elem[3] ? elem[3][2] : elem[2];
+                            };
+                            if (cls.slice(0, 13) === "ting-subjects" && typeof elem[2] === "string") {
+                                result.subject = (result.subject || []).concat([elem[2]]);
                             }
-                            if(cls === "creator" && elem[2] === "Af") { result.creator = elem[3][2] };
-                            if(cls === "abstract") { result.description = elem[2] };
-                            if(elem[0] === "h3") { result.title = elem[2][2]; }
+                            if (cls === "creator" && elem[2] === "Af") {
+                                result.creator = elem[3][2]
+                            };
+                            if (cls === "abstract") {
+                                result.description = elem[2]
+                            };
+                            if (elem[0] === "h3") {
+                                result.title = elem[2][2];
+                            }
                             elem.slice(2).forEach(bibVisitor);
                         }
                     }
@@ -1243,43 +1443,55 @@
     function API() {
         rpcCallback("BibNews", function(data, callback) {
             callback(undefined, [
-                {date: Date.now() - 10000000,
+                {
+                date: Date.now() - 10000000,
                 url: "http://example.com/event",
                 title: "Eventtitle 1",
-                description: "description"},
-                {date: Date.now() - 20000000,
+                description: "description"
+            },
+                {
+                date: Date.now() - 20000000,
                 url: "http://example.com/event",
                 title: "Eventtitle 2",
-                description: "description"},
-                {date: Date.now(),
+                description: "description"
+            },
+                {
+                date: Date.now(),
                 url: "http://example.com/event",
                 title: "Eventtitle 3",
-                description: "description"}]);
+                description: "description"
+            }]);
         });
         rpcCallback("BibCalendar", function(data, callback) {
             callback(undefined, [
-                {date: Date.now() + 10000000,
+                {
+                date: Date.now() + 10000000,
                 coverUrl: "http://example.com/eventicon.jpg",
                 url: "http://example.com/event",
                 title: "Eventtitle 1",
-                description: "description"},
-                {date: Date.now() + 20000000,
+                description: "description"
+            },
+                {
+                date: Date.now() + 20000000,
                 coverUrl: "http://example.com/eventicon.jpg",
                 url: "http://example.com/event",
                 title: "Eventtitle 2",
-                description: "description"},
-                {date: Date.now(),
+                description: "description"
+            },
+                {
+                date: Date.now(),
                 coverUrl: "http://example.com/eventicon.jpg",
                 url: "http://example.com/event",
                 title: "Eventtitle 3",
-                description: "description"}]);
+                description: "description"
+            }]);
         });
         rpcCallback("BibDataSearch", function(data, callback) {
             bibSearch(data.query, data.page, callback);
         });
         rpcCallback("BibDataEntry", function(id, callback) {
             bibEntry(id, function(err, data) {
-                if(err) {
+                if (err) {
                     return callback(err, data);
                 }
                 // id, isCollection, coverUrl, title, creator, date, subject, abstract 
@@ -1293,8 +1505,8 @@
                     description: data.description && data.description[0],
                     details: {}
                 };
-                for(var key in data) {
-                    if(key.match(/^[A-ZÅÆØ]/)) {
+                for (var key in data) {
+                    if (key.match(/^[A-ZÅÆØ]/)) {
                         result.details[key] = data[key];
                     }
                 }
@@ -1303,7 +1515,7 @@
             });
         });
     }
-    
+
     //}}}
     // Serve data {{{
     function webServer(app) { //{{{
@@ -1313,37 +1525,69 @@
         app.use("/depend", express["static"](__dirname + "/depend"));
         app.get("/bibdata.js", function(req, res) {
             fs.readFile("bibdata.js", "utf8", function(err, data) {
-                if(err) throw err;
+                if (err) throw err;
                 res.end(data);
             });
         });
         app.get("*", function(req, res) {
-            jmlPage({path: req.url.slice(1), callback: function(data) {
-                var page = "";
-                res.end("<!DOCTYPE html>" + jmlToStr(["html",
+            jmlPage({
+                path: req.url.slice(1),
+                callback: function(data) {
+                    var page = "";
+                    res.end("<!DOCTYPE html>" + jmlToStr(["html",
                     ["head",
                         ["title", "BibData"],
-                        ["meta", {"http-equiv": "Content-Type", content: "text/html; charset=UTF-8"}],
-                        ["meta", {"http-equiv": "X-UA-Compatible", content: "IE=edge,chrome=1"}],
-                        ["meta", {"name": "HandheldFriendly", content: "true"}],
-                        ["meta", {"name": "viewport", content: "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}],
-                        ["meta", {"name": "format-detection", content: "telephone=no"}],
-                        ["meta", {"name": "apple-mobile-web-app-capable", content: "yes"}],
-                        ["meta", {"name": "apple-mobile-web-app-status-bar-style", content: "black"}],
-                        ["link", {rel: "stylesheet", href: "/depend/font-awesome.css"}],
-                        ["script", {src: "/depend/socket.io.min.js"}, ""],
-                        ["script", {src: "/bibdata.js"}, ""]
+                        ["meta", {
+                        "http-equiv": "Content-Type",
+                        content: "text/html; charset=UTF-8"
+                    }],
+                        ["meta", {
+                        "http-equiv": "X-UA-Compatible",
+                        content: "IE=edge,chrome=1"
+                    }],
+                        ["meta", {
+                        "name": "HandheldFriendly",
+                        content: "true"
+                    }],
+                        ["meta", {
+                        "name": "viewport",
+                        content: "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"
+                    }],
+                        ["meta", {
+                        "name": "format-detection",
+                        content: "telephone=no"
+                    }],
+                        ["meta", {
+                        "name": "apple-mobile-web-app-capable",
+                        content: "yes"
+                    }],
+                        ["meta", {
+                        "name": "apple-mobile-web-app-status-bar-style",
+                        content: "black"
+                    }],
+                        ["link", {
+                        rel: "stylesheet",
+                        href: "/depend/font-awesome.css"
+                    }],
+                        ["script", {
+                        src: "/depend/socket.io.min.js"
+                    }, ""],
+                        ["script", {
+                        src: "/bibdata.js"
+                    }, ""]
                     ],
-                    ["body", 
+                    ["body",
                         data.jml,
                         ["script", "window.main();"]
                     ]]))
-            }});
+                }
+            });
         });
     } //}}}
     function socketOnConnection(socket) {
         registerRPC(socket);
     }
+
     function startServer() {
         var express = require("express");
         var app = express();
@@ -1363,7 +1607,7 @@
         this.name = name;
         this.suites = 1;
         this.errCount = 0;
-        if(doneFn) {
+        if (doneFn) {
             this.doneFn = doneFn;
         }
     } //}}}
@@ -1372,7 +1616,7 @@
         console.log("Fail in " + this.name + ": " + desc);
     }; //}}}
     TestSuite.prototype.assert = function(expr, desc) { //{{{
-        if(!expr) {
+        if (!expr) {
             ++this.errCount;
             console.log("Assert in " + this.name + ": " + desc);
         }
@@ -1388,11 +1632,11 @@
         return result;
     }; //}}}
     TestSuite.prototype._cleanup = function() { //{{{
-        if(this.suites === 0) {
-            if(this.doneFn) {
+        if (this.suites === 0) {
+            if (this.doneFn) {
                 this.doneFn(this.errCount);
             }
-            if(this.parent) {
+            if (this.parent) {
                 this.parent.errCount += this.errCount;
                 this.parent.suites -= 1;
                 this.parent._cleanup();
@@ -1404,7 +1648,7 @@
     function testClient(test) { //{{{
         test.done();
     }
-    if(isClient) {
+    if (isClient) {
         window.testClient = testClient;
     }
     //}}}
@@ -1416,15 +1660,16 @@
     function testZombie(test) { //{{{
         var Browser = require("zombie");
         var browser = new Browser();
-        browser
-            .visit("http://" + host + ":" + port, {debug: true})
+        browser.visit("http://" + host + ":" + port, {
+            debug: true
+        })
             .then(function() {
-                test.assert(browser.errors.length === 0, "errors from load in client");
-                browser.window.testClient(test);
-            }).fail(function() {
-                test.fail("zombie load error");
-                test.done();
-            });
+            test.assert(browser.errors.length === 0, "errors from load in client");
+            browser.window.testClient(test);
+        }).fail(function() {
+            test.fail("zombie load error");
+            test.done();
+        });
     } //}}}
     function runTests() { //{{{
         var Browser = require("zombie");
@@ -1435,24 +1680,25 @@
         // start the client-test via zombie
         var clientSuite = test.suite("client");
         var browser = new Browser();
-        browser
-            .visit("http://" + host + ":" + port, {debug: true})
+        browser.visit("http://" + host + ":" + port, {
+            debug: true
+        })
             .then(function() {
-                browser.window.testClient(clientSuite);
-            }).fail(function() {
-                clientSuite.fail("could not start client-test");
-                test.done();
-            });
+            browser.window.testClient(clientSuite);
+        }).fail(function() {
+            clientSuite.fail("could not start client-test");
+            test.done();
+        });
 
         testZombie(test.suite("ui"));
-        
+
         test.done();
     } //}}}
     // Main {{{1 
-    if(isServer) {
+    if (isServer) {
         startServer();
         var command = process.argv[2];
-        if(command === "test") {
+        if (command === "test") {
             runTests();
         }
     }
