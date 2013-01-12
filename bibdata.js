@@ -561,8 +561,8 @@
                 fontSize: unit * 0.65 - 2
             }),
             page: css({
-                WebkitTransform: "translate3d(0,0,0)",
-                webkitTransform: "translate3d(0,0,0)",
+                //WebkitTransform: "translate3d(0,0,0)",
+                //webkitTransform: "translate3d(0,0,0)",
                 verticalAlign: "middle",
                 lineHeight: "100%",
                 fontSize: smallFont,
@@ -574,8 +574,8 @@
                 background: "#ffe"
             }),
             header: css({
-                WebkitTransform: "translate3d(0,0,0)",
-                webkitTransform: "translate3d(0,0,0)",
+                //WebkitTransform: "translate3d(0,0,0)",
+                //webkitTransform: "translate3d(0,0,0)",
                 position: "fixed",
                 marginLeft: 0,
                 paddingLeft: 0,
