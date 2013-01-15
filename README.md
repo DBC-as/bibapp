@@ -1,4 +1,5 @@
 [![ci](https://secure.travis-ci.org/rasmuserik/bibdata.png)](http://travis-ci.org/rasmuserik/bibdata)
+[![logo](https://ssl.solsort.com/bibdata-github.png)](https://ssl.solsort.com/bibdata-github.png)
 
 # BibData
 
