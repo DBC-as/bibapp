@@ -10,7 +10,8 @@
     "express": "*",
     "closure-compiler": "*",
     "socket.io-client": "*",
-    "socket.io": "*"
+    "socket.io": "*",
+    "qp": "git://github.com/rasmuserik/qp.git#master"
   },
   "scripts": {
       "test": "node bibdata.js test"
