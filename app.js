@@ -1,11 +1,11 @@
-require("./qp")(global);
+require("qp")(global);
 
 function search(client) {
-    client.done();
+    client.json(client);
 }
 
 function bibentry(client) {
-    client.done();
+    client.json(client);
 }
 
 qp.route.add("search", search);
