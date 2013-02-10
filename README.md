@@ -120,5 +120,5 @@ It may also be running on http://bibdata.dk/.
     - closure compiler for optimisation and library
     - app packaging via cordova
 
-[![ci](https://secure.travis-ci.org/rasmuserik/bibdata.png)](http://travis-ci.org/rasmuserik/bibdata)
+[![ci](https://secure.travis-ci.org/DBC-as/bibapp.png)](http://travis-ci.org/DBC-as/bibapp)
 [![logo](https://ssl.solsort.com/github-solsort.png?dbc-bibapp)](https://ssl.solsort.com/github-solsort.html?dbc-bibapp)

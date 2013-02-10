@@ -1,20 +1,14 @@
 {
-  "name": "bibdata",
-  "version": "0.0.1",
-  "author": "Rasmus Erik",
-  "homepage": "http://github.com/rasmuserik/bibdata",
-  "description": "Hybrid mobile/html5 public library app",
+  "name": "bibapp",
+  "version": "0.2.0",
+  "author": "DBC / Rasmus Erik",
+  "homepage": "http://github.com/DBC-as/bibapp",
+  "description": "Hybrid mobile/html5 public library app prototype",
   "dependencies": {
-    "request": "*",
-    "zombie": "*",
-    "express": "*",
-    "closure-compiler": "*",
-    "socket.io-client": "*",
-    "socket.io": "*",
     "qp": "git://github.com/rasmuserik/qp.git#master"
   },
   "scripts": {
-      "test": "node bibdata.js test"
+      "test": "node app.js test"
   },
   "engines": {"node": "*"}
 }
