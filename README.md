@@ -1,6 +1,8 @@
-# HTML5 bibliographic/library app prototyping and proof of concepts
+# HTML5 bibliographic/library app prototyping experiments and proof of concepts
 
-Currently this is (mainly internal) proof-of-concepts and experiments. Contact: [Rasmus Erik](http://rasmuserik.com).
+This is mainly internal proof-of-concepts and experiments. 
+
+Contact: [Rasmus Erik](http://rasmuserik.com) aka. RJE at DBC.
 
 
 # Versions 0.2 (in `app.js`)
