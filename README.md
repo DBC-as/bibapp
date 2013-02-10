@@ -1,26 +1,50 @@
-[![ci](https://secure.travis-ci.org/rasmuserik/bibdata.png)](http://travis-ci.org/rasmuserik/bibdata)
-[![logo](https://ssl.solsort.com/bibdata-github.png)](https://ssl.solsort.com/bibdata-github.png)
+# HTML5 bibliographic/library app prototyping and proof of concepts
 
-# BibData
+Currently this is (mainly internal) proof-of-concepts and experiments. Contact: [Rasmus Erik](http://rasmuserik.com).
 
-Mobile/html5 public library app.
 
-Prototype/proof-of-concept implemented:
+# Versions 0.2 (in `app.js`)
 
-- mobile html5-app (portrait orientation) prototype. More layouts to come.
-- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) or [w3](http://www.w3.org/2007/08/pyRdfa/extract?uri=http://bibdata.dk/work/710100:44251205) (if bibdata.dk is up running).
+Rewrite in progress, not usable yet.
 
-# How to run
+# Versions 0.1 (in `bibdata.js`)
+
+Mobile/html5 public library app experiment.
+
+## How to run
 
 Install node.js, check the repository out, and then:
 
-    npm install
+    npm install request zombie express socket.io-client socket.io
     node bibdata.js
     [open localhost:7777 in the browser]
 
 It may also be running on http://bibdata.dk/.
 
-# Roadmap
+## Prototype/proof-of-concept-features implemented
+
+- static + dynamic site from one codebase
+- mobile html5-app (portrait orientation) prototype, with transitions.
+- contains static-html semantic marking (RDFa + schema.org). Tryout bibdata.dk with [google webmaster tools](https://www.google.com/webmasters/tools/richsnippets?url=http%3A%2F%2Fbibdata.dk%2Fwork%2F870971%3A73214424) or [w3](http://www.w3.org/2007/08/pyRdfa/extract?uri=http://bibdata.dk/work/710100:44251205) (if bibdata.dk is up running).
+
+# Copyright
+
+    Copyright (C) 2013 Dansk BiblioteksCenter, DBC A/S
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Notes
 
 - calendar-page
 - news-page
@@ -39,7 +63,7 @@ It may also be running on http://bibdata.dk/.
 
 ----
 
-- Version 0.1
+- Current target
     - Søg bog
         - søgeresultatliste
         - bestil
@@ -72,7 +96,7 @@ It may also be running on http://bibdata.dk/.
     - facetbrowser
         - årstalsgraf
 
-# Notes
+----
 
 - backend
     - search-results
@@ -94,4 +118,5 @@ It may also be running on http://bibdata.dk/.
     - closure compiler for optimisation and library
     - app packaging via cordova
 
-![logo](http://bibdata.dk/bibdata.png?github)
+[![ci](https://secure.travis-ci.org/rasmuserik/bibdata.png)](http://travis-ci.org/rasmuserik/bibdata)
+[![logo](https://ssl.solsort.com/github-solsort.png?dbc-bibapp)](https://ssl.solsort.com/github-solsort.html?dbc-bibapp)
