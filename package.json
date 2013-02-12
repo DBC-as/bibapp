@@ -5,6 +5,7 @@
   "homepage": "http://github.com/DBC-as/bibapp",
   "description": "Hybrid mobile/html5 public library app prototype",
   "dependencies": {
+    "socket.io-client": "*",
     "qp": "git://github.com/rasmuserik/qp.git#master"
   },
   "scripts": {

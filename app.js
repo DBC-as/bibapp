@@ -3,7 +3,8 @@ require("qp")(global);
 // simplify opensearch-response-xml into json
 function openSearchResponseToJson(jsonml) {
     jsonml = jsonml[2][2][2];
-    var result = {results: []};
+    var result = {};
+    result["results"] = [];
     for(var i = 2; i < jsonml.length; ++i) {
         var current = jsonml[i];
         var tagname = current[0];
@@ -25,7 +26,7 @@ function openSearchResponseToJson(jsonml) {
                     objects.push(object);
                 }
             }
-            result.results.push(objects);
+            result["results"].push(objects);
         }
     }
     return result;
@@ -53,7 +54,7 @@ function openSearchSimple(query, first, callback) {
         var jsonml = qp.jsonml.fromString(data)[0];
 
         // throw on error message
-        if(jsonml[2][2][2] === "error") return callback(qp.jsonml.toString(jsonml));
+        if(jsonml[2][2][2][0] === "error") return callback(qp.jsonml.toString(jsonml));
 
         callback(null, openSearchResponseToJson(jsonml));
     }
@@ -62,7 +63,7 @@ function openSearchSimple(query, first, callback) {
 function clientOpenSearch(client) {
     openSearchSimple(query, first, function(err, result) {
         if(err) {
-            client.json({error: err});
+            client.error(err);
         } else {
             client.json(result);
         }
@@ -70,8 +71,9 @@ function clientOpenSearch(client) {
 }
 
 function showSearchResults(client, err, results) {
-    if(err) throw err;
-    client.json(results);
+    if(err) return client.error(err);
+    if(client.route.type === "json") return client.json(results);
+    client.jsonml(["div", "TODO: format and return as jsonml-html here."]);
 }
 
 function search(client) {
