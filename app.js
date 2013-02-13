@@ -81,10 +81,10 @@ function search(client) {
     var first = Number(client.route.args[1]) || 0;
     var showFn = showSearchResults.bind(null, client);
 
-    if(qp.platform.nodejs) {
+    if(qp.env.nodejs) {
         openSearchSimple(query, first, showFn);
 
-    } else if(qp.platform.html5) {
+    } else if(qp.env.html5) {
         qp.ui.showLoadingIndicator({title: "Søger..."});
         qp.route.rpc("search", {args: [query, first]}, showFn);
 
